@@ -1,0 +1,382 @@
+<br> 
+<center><img src="http://i.imgur.com/tveTlt8.png" width="300"></center>
+
+## Course: Estadística Para el Análisis Político II<br> Semestre 2017-II<br> 
+### Prof. José Manuel Magallanes, PhD 
+____
+## **Análisis Multivariado**
+
+## Modelamiento y Técnicas Predictivas (Datos longitudinales)
+____
+
+<a id='beginning'></a>
+
+Esta última unidad desarrolla:
+
+* __Panel de Datos__
+    * [Efectos Fijos](#fixed) 
+    * [Efectos Aleatorios](#random) 
+* [Eventos Históricos](#eha)
+* [Series de Tiempo](#series)
+
+Utilicemos el siguiente archivo[^1]:
+```{r, eval=TRUE}
+library(openxlsx)
+folder="data"
+file="panelprinceton.xlsx"
+toOpen=file.path(folder,file)
+datos=read.xlsx(toOpen)
+```
+
+Veamos qué variables tenemos y cómo están:
+```{r, eval=TRUE}
+str(datos)
+```
+
+Nuestro ejemplo necesita la variable **y** y las **x1**,**x2** y **x3** para plantear nuestro modelo, pero además **country** y **year**; por lo que crearemos una subtabla que _no_ contenga a las demás variables:
+
+```{r, eval=TRUE}
+panel=datos[,-c(4,8)]
+```
+
+Normalmente podríamos aquí explorar la relación entre las variables para pensar un modelo:
+```{r, eval=TRUE}
+pairs(~y+x1+x2+x3,data=panel,main="Correlaciones")
+```
+
+Sabiendo que la _y_ es una medición, podríamos probar:
+```{r, eval=TRUE}
+medicionMod=glm(y~x1+x2+x3,data=panel, family = gaussian)
+summary(medicionMod)
+```
+
+
+Los resultados nos muestran que el modelo no tiene variables significativas (al 0.05).
+
+____
+
+
+<a id='fixed'></a>
+
+## Fixed-Effects en data panel
+
+Cuando se aplicó **str()** vimos que los tipos de datos son correctos. Pero la tabla de datos del panel tiene una estructura particular:
+
+```{r, eval=TRUE}
+head(panel,10)
+```
+
+Notarás que el país _A_ tiene varias mediciones (año a año): un panel se caracteriza por esto. Es decir, el modelo anterior asumía que el valor de una celda de _y_ estaba asociado a los respectivos valores de las otras variables _x_; por lo cual, perdía de vista :
+```{r, eval=TRUE}
+library(car)
+scatterplot(y~year|country, boxplots=FALSE, smooth=TRUE, reg.line=FALSE, data=panel)
+```
+
+Al usar la regresión convencional, lo que estábamos haciendo era _amontonar_ todos los datos sin considerar el efecto del tiempo. Eso es similar a usar _pooled regression_:
+
+Esto resulta equivalente a usar lo llamado _pooled regression_:
+
+```{r, eval=TRUE}
+library(plm)
+pooled <- plm(y ~ x1+x2+x3, data=panel, index=c("country", "year"), model="pooling")
+summary(pooled)
+```
+
+Es decir, si nuestro modelo de regresión debe considerar que una celda no es el valor de medir una sola vez a un caso, sino que es una de varias veces, tiene que abandonar el enfoque clásico y asumir un panel de datos. Eso se lo decimos a R así:
+
+```{r, eval=TRUE}
+library(plm) # instalar
+fixed <- plm(y ~ x1 + x2 + x3, data=panel, index=c("country", "year"), model="within")
+summary(fixed)
+```
+
+Vemos que **x1** tiene efecto, habiendo controlado el efecto de _x2_ y _x3_. Este efecto es positivo, y nos indica cómo afecta al cambio promedio de _y_ por país. Nos nos muestra cuál es la constante (base) para cada país, pero se puede obtener así:
+
+```{r, eval=TRUE}
+fixef(fixed)
+```
+
+Si deseases comprobar si este modelo es mejor que el anterior (*pooled*):
+
+```{r, eval=TRUE}
+pFtest(fixed, pooled)
+```
+
+Si el p-valor fuese no significativo, deberíamos concluir que el modelo de regresión convencional debe ser usado. Como no lo es, el modelo de data panel de efectos fijos es la elección.
+
+<a id='random'></a>
+
+## Random-Effects en data panel
+
+Solicitar un regresión tipo _random effects_ es muy sencillo:
+
+```{r, eval=TRUE}
+random <- plm(y ~ x1 + x2 + x3, data=panel, index=c("country", "year"), model="random")
+summary(random)
+```
+
+La variable _x1_ logra un menor nivel de significancia que el caso de los efectos fijos; pero parece no diferenciarse de la regresión convencional o _pooled_. Veamos si es así:
+
+
+```{r, eval=TRUE}
+plmtest(pooled, type=c("bp"))
+```
+
+El LM test somete a prueba la H0 que el modelo pooled es mejor que el aleatorio. Por lo visto, no se rechazaría tal H0.
+
+En estas circunstancia podemos pedir el test de Hausman, cuya H0 es que el modelo adecuado es el modelo de efectos aleatorios y no el de efectos fijos. 
+
+```{r, eval=TRUE}
+phtest(fixed, random)
+```
+
+El test de Hausman es NO significativo, lo que nos haría pensar que el modelo aleatorio debería ser preferido al de efectos fijos. 
+
+
+Como vemos, la data panel eleva la complejidad de nuestra discusión. Ya no es tan _sencillo_ aplicar alguna fórmula. 
+
+Utilicemos la data utilizada por [Green](http://pages.stern.nyu.edu/~wgreene/Text/tables/tablelist5.htm) sobre aerolíneas.  Al menos dos consideraciones deberían guiar nuestra decisión sobre cuál elegir. Primero sería analizar como _x1_ se comporta en relación a la _y_ para cada caso:
+
+```{r, eval=TRUE}
+link='http://people.stern.nyu.edu/wgreene/Text/tables/TableF7-1.txt'
+panel2=read.table(link,header = T)
+panel2=panel2[panel2$I<=4,] # un subset de aerolineas
+scatterplot(C~Q|I, boxplots=FALSE, xlab="x1=resultados", ylab="y=Total Cost",smooth=FALSE, data=panel2)
+```
+
+En la gráfica anterior, cada aerolínea tiene diferentes costos, pero las pendientes son muy similares cuando usamos _resultados_ como regresor. Veamos otro regresor:
+
+```{r, eval=TRUE}
+scatterplot(C~LF|I, boxplots=FALSE, xlab="x1=capacidad utilizada", ylab="y=Total Cost",smooth=FALSE, data=panel2)
+```
+
+En este caso, a mayor costo, las pendientes varían sustantivamente. 
+
+En el primer caso, cuando las pendientes no son disimiles entre sí, podemos sugerir un modelo de efectos aleatorios. Por el contrario, cuando las pendientes varían, la elección sería el modelo de efectos fijos.
+
+Un segundo punto a tener en cuenta es la teoría para el diseño. Siguiendo las recomendaciones del Prof. Williams[^2] en este tema, el proponer un modelo de efectos fijos es por qué **asumimos** que las variables independientes variarían con el sujeto en cada periodo, pues las variables que permanecen _fijas_, como sexo o raza, no son medidas por los esta técnica; característica clave de esta técnica pues justamente controla por todas las variables invariantes _omitidas_. Por otro lado, los modelos de efectos aleatorios serán importantes cuando incluyamos variables independientes (regresores) que no varían en el tiempo, pero esta técnica ya no controlará el efecto de variables omitidas.
+
+____
+
+
+<a id='eha'></a>
+
+## Análisis de Eventos Históricos (EHA)
+
+Hablamos de EHA cuando queremos examinar y modelar la _duración_, es decir, el tiempo que demora algo en ocurrir. 
+
+```{r, eval=TRUE}
+link='https://raw.githubusercontent.com/PoliticayGobiernoPUCP/EstadisticaPoliticaGobiernoII/master/sesiones/data/reincidencia.txt'
+eha=read.table(link,header = T, stringsAsFactors = T)
+names(eha)
+```
+
+Los datos mostrados se refieren a casos de reincidencia criminal; y contienen lo siguiente:
+
+* **week**: Semana del primer arresto luego de haber salido de la prisión. También representa el momento cuando acabo de hacerle seguimiento a este caso.
+* **arrest**: Categoría lógica, este es el evento. Vale 1 si al final del periodo de observación fue arrestado en algún momento; 0 si no fue arrestado hasta que acabó el estudio.
+* **fin**: Categoría lógica que indica si el individuo recibió ayuda financiera al salir de prisión (la ayuda fue dada por el investigador aleatoriamente).
+* **age**: en años al momento de dejar la cárcel.
+* **race**: Categoría lógica que indica si el individuo es _negro_ o _no_.
+* **wexp**: Categoría lógica, que indica si el individuo tenia trabajo a tiempo completo antes de ser encarcelado.
+* **mar**: Categoría lógica, que indica si el individuo estaba casado al momento de salir de la cárcel.
+* **paro**: Categoría lógica que indica si el individuo salió en libertad bajo palabra.
+* **prio**: Número de encarlamientos previos.
+* **educ**: Nivel educativo: 2 (grado 6 o menos), 3
+(6 al 9), 4 (10 y 11), 5 (12), o 6 ( post escuela).
+* **emp1** – **emp52**: El estudio duro 52 semanas. Cada una de estas columnas indica si el individuo obtuvo trabajo en alguna de esas semanas.
+
+Subsetiemos la data y veamos algunas filas:
+
+```{r, eval=TRUE}
+eha=eha[,c(1:10)]
+head(eha,10)
+```
+
+Las filas 1,2,3,y 7 tiene a un individuo que fue arrestado, las otras filas tiene individuos que no fueron arrestados nuevamente, _mientras_ el estudio se llevó a cabo.
+
+Veamos las estructura de la data:
+```{r, eval=TRUE}
+str(eha)
+```
+
+La variable de nivel educativo debe ser ordinal:
+
+```{r, eval=TRUE}
+eha$educ=as.ordered(eha$educ)
+```
+
+Grafiquemos la duración:
+```{r, eval=TRUE}
+hist(eha$week)
+```
+
+Uno usa valores discreto para medir duración, pero la distribución de la duración se diferencia de los modelos de conteos (Poisson, etc.). Nótese que el histograma hace pensar que la mayoría de los reos vuelve a la cárcel al final, pero no es cierto, pues esto significa que muchos siguen libres cuando acaba el estudio. Si modelásemos sólo a los que vuelven, perderíamos mucha filas:
+
+```{r, eval=TRUE}
+table(eha$arrest)
+```
+
+¿Por qué hacer el esfuerzo de estudiar tantos individuos, y perder  tantos en el análisis?
+
+Por eso, la técnica EHA, también conocida en otras profesiones como análisis de supervivencia, usa todos esos datos, denominando a los que no han experimentado el evento de interés (aquí: *ser arrestado*) como valores _censurados_. 
+
+El primer paso para usar EHA, es indicarle a R que trate a la data de esa manera:
+
+* Creación del objeto _survival_:
+```{r, eval=TRUE}
+library(survival)
+eha$survival=with(eha,Surv(week, arrest))
+# que es:
+eha$survival
+```
+
+Como ves, la columna creada tiene valores con un **+**, lo que indica que están censurados.
+
+### Análisis Kaplan-Meier (KM)
+
+KM es el procedimiento descriptivo básico que se utiliza para ver la dinámica de sobrevivencia. Veamos el comportamiento genérico de permanecer libre:
+
+```{r, eval=TRUE}
+library(ggplot2)
+library(ggfortify)
+KM.generico = survfit(survival ~ 1, data = eha)
+
+###
+ejeX='SEMANAS HASTA SER RE-ARRESTADO\n curva cae cuando alguien es arrestado'
+ejeY='Prob(PERMANECER LIBRE)'
+titulo="Curva de Sobrevivencia (permanecer libre)"
+autoplot(KM.generico,xlab=ejeX,ylab=ejeY, main = titulo,conf.int = F)
+```
+
+La gráfica anterior nos da una idea de como se comporta esta población; pero sería interesante ver una comparación:
+```{r, eval=TRUE}
+KM.fondos = survfit(survival ~ fin, data = eha)
+
+###
+ejeX='SEMANAS HASTA SER RE-ARRESTADO\n curva cae cuando alguien es arrestado'
+ejeY='Prob(PERMANECER LIBRE)'
+titulo="Curva de Sobrevivencia (permanecer libre)"
+autoplot(KM.fondos,xlab=ejeX,ylab=ejeY, main = titulo,conf.int = F)
+```
+
+La posición de las curvas nos hace pensar que le cuesta más a los que no tuvieron fondos permanecer libres. Para evitar afirmar tal cosa, podemos hacer la prueba de Mantel-Cox (LogRanK):
+```{r, eval=TRUE}
+survdiff(survival ~ fin, data = eha)
+```
+
+Siendo H0: no hay diferencias, con el p-valor obtenido no podemos afirmar que haya diferencias. Este gráfico aclara por qué:
+```{r, eval=TRUE}
+autoplot(KM.fondos,xlab=ejeX,ylab=ejeY, main = titulo,conf.int = T)
+```
+
+### Regresión Cox
+
+Como toda regresión, esta técnica permite utilizar regresores, pero no modela la duración sino el riego de que el evento suceda (ser re arrestado):
+```{r, eval=TRUE}
+modelo.REARRESTAR <- coxph(survival ~ fin + age + race + wexp + mar + paro + prio,data=eha)
+summary(modelo.REARRESTAR)
+```
+
+Podemos ver que dar financiamiento es significativo, al igual que edad y condenas previas. Las dos primeras tienen una relación inversa con el riesgo de ser re arrestado (reducen el riesgo), pero la otra sí es directa. Podríamos leer el segundo bloque con los coeficientes exponenciados para dar una interpretación. Esto es diferente si se trata de una variable categórica o una numérica. Así, el riesgo de ser arrestado de alguien con fondos es el 0.6843 de alguien sin tener fondos. Por otro lado, cada condena previa aumenta el riesgo de ser re arrestado en 9.58%.
+
+----
+
+<a id='series'></a>
+
+## Series de Tiempo
+
+La siguiente data representa una serie de tiempo:
+
+```{r, eval=TRUE}
+link='https://raw.githubusercontent.com/PoliticayGobiernoPUCP/EstadisticaPoliticaGobiernoII/master/sesiones/data/timeSeries.csv'
+data = read.csv(link,stringsAsFactors = F)
+head(data,20)
+```
+
+Para que R sepa que es una serie de tiempo debemos indicárselo de manera expresa:
+
+```{r, eval=TRUE}
+library(tseries)
+primerMomento=c(2003,1)
+anual=12
+queColumna=data[,2]
+dataTime = ts(queColumna,start = primerMomento,frequency = anual)
+plot(dataTime, xlab='Years', ylab = 'Amount')
+```
+
+### Explorando la serie de tiempo
+
+Las series de tiempo requieren ser exploradas para entender el tratamiento que se les dará cuando sean modeladas para producir predicciones:
+
+* Debe eliminarse curvatura de valor medio: El gráfico anterior muestra que la media varia con el tiempo, veamos que evitaría eso:
+
+```{r, eval=TRUE}
+dataTimeD1=diff(dataTime,lag=1) # con 1 lag
+plot(dataTimeD1,ylab='Differenced amount')
+```
+
+* Debe eliminarse varianza variable: También se vió que la varianza se correlaciona con el paso del tiempo, tambien hay que eliminar eso:
+
+```{r, eval=TRUE}
+dataTimeNOVAR=log10(dataTime) # suavizando con logaritmos
+plot(dataTimeNOVAR,ylab='Log (Amount)')
+```
+
+Si aplicamos ambos procesos a la vez:
+
+```{r, eval=TRUE}
+dataTime_STok=diff(log10(dataTime),lag=1)
+plot(dataTime_STok,ylab='Differenced Log (Tractor Sales)')
+```
+
+El ultimo gráfico tiene una serie lista para ser modelada, pues ya es _estacionaria_.
+
+* Identificar parametros para el modelo:
+```{r, eval=TRUE}
+library(forecast)
+ARIMAfit = auto.arima(log10(dataTime), approximation=FALSE,trace=FALSE)
+summary(ARIMAfit)
+
+```
+
+Los resultados nos dan los parametros, con eso hacemos la predicción:
+
+```{r, eval=TRUE}
+horizontePredecido=36
+pred = predict(ARIMAfit, n.ahead = horizontePredecido)
+
+#####
+# data original:
+plot(dataTime,type='l',xlim=c(2004,2018),ylim=c(1,1600),xlab = 'Year',ylab = 'Amount')
+# data predecida:
+lines(10^(pred$pred),col='blue')
+# margen de error:
+lines(10^(pred$pred+2*pred$se),col='orange')
+lines(10^(pred$pred-2*pred$se),col='orange')
+```
+
+¿De dónde sacó esto la función _auto.arima_?
+
+* Serie _estacionaria_:
+```{r, eval=TRUE}
+par(mfrow = c(1,2),mai=c(0.5,0.5,1,0.5)) #bottom clockwise
+acf(ts(diff(log10(dataTime))),main='ACF Amount')
+pacf(ts(diff(log10(dataTime))),main='PACF Amount')
+```
+
+Aquí arriba se ven algunos de los valores que se usan en el modelo ARIMA.
+
+* Analizando los residuos calculados de _auto.arima_:
+
+```{r, eval=TRUE}
+par(mfrow = c(1,2),mai=c(0.5,0.5,1,0.5)) #bottom clockwise
+acf(ts(ARIMAfit$residuals),main='ACF Residual')
+pacf(ts(ARIMAfit$residuals),main='PACF Residual')
+```
+
+En este último caso, vemos que no hay información perdida fuera de las bandas.
+
+
+[^1]: Agradecimiento a [OscarTorres-Reyna](https://www.princeton.edu/~otorres/) de Princeton por permitir el uso de su ejemplo.
+[^2]: Agradecimiento al Profesor [Richard Williams](https://www3.nd.edu/~rwilliam/) de Notre Dame por compartir sus notas de clase..

@@ -1,0 +1,554 @@
+<br> 
+<center><img src="http://i.imgur.com/tveTlt8.png" width="300"></center>
+
+## Curso: Estadística Para el Análisis Político II<br> Semestre 2017-II<br> 
+### Prof. José Manuel Magallanes, PhD 
+____
+## **Análisis Multivariado**
+## Técnicas Descriptivas y Exploratorias Multivariadas (Parte I)
+____
+
+<a id='beginning'></a>
+
+
+En este curso trabajaremos técnicas multivariadas. Lo complejo es justamente la cantidad de variables que intervienen y que requieren muchas veces mucho tratamiento. La mayoría de programas estadísticos (SPSS, STATA, R, etc.) tienen diversas funciones que ayudan a alistar los datos necesarios cuando se tienen muchas variables involucradas. **Esto no era así cuando sólo se trabajaban con dos variables**. **R** es muy versatil para preparar los datos para el análisis multivariado. Usted puede utilizar otro software, como **EXCEL**, para alistarlos, pero si la cantidad de datos es numerosa, pronto encontrará que son muy limitados. 
+
+## AGRUPANDO LAS UNIDADES DE ESTUDIO
+
+En general, las tablas de datos se estructuran como una colección de filas (casos o unidades de estudio) y columnas (variables). En este caso, nos interesa agrupar las unidades de estudio (filas). Para este caso, utilizaremos la data creada por el *PNUD*, el Indice de Densidad del Estado. Este índice es producto de combinar otras variables. 
+
+La data original del IDE-PNUD está en Excel, lo cual no sería mayor problema, sino fuera por que las _hojas_ tienen varios elementos innecesarios para nuestro análisis. Esta data necesita ser tratada para dejarla lista para el análisis multivariado. Este proceso está descrito más abajo, siga este [link](#cleaning) para revisarlo.
+
+La data preparada para ser analizada podemos encontrarla en el archivo IDE_limpio.xlsx, descarguelo usando este [link](https://github.com/PoliticayGobiernoPUCP/EstadisticaPoliticaGobiernoII/raw/master/sesiones/data/IDE_limpio.xlsx) y guárdelo en la carpeta _data_. Desde ahí comience:
+
+```{r, eval=FALSE}
+library(openxlsx)
+folder='data'
+fileName='IDE_limpio.xlsx'
+fileToRead=file.path(folder,fileName)
+provinciasNew=read.xlsx(fileToRead)
+```
+
+La idea es super simple, queremos, en este caso, saber qué provincias son lo sufientemente **similares entre sí** para decidir que formen un grupo homogeneo o conglomerado. Lo atractivo, en este caso, es que las múultiples variables que se tienen permiten darle un **perfil** particular a cada provincia, lo que permite _acercarlas_ o _alejarlas_ basandonos justamente en tal similitud.
+podemos usar muchas características de las provincias (esta es una técnica multivariada) para agruparlas. 
+
+Veremos aquí una técnica de conglomeración conocidad como la **jerárquica**, limitaremos la aplicación a que multiples variables numéricas.
+
+Veamos que data tenemos, y de qué tipo son:
+```{r, eval=FALSE}
+str(provinciasNew)
+```
+
+Las variables que nos interesan son:
+
+* Población con acta nacimiento o DNI, es un **porcentaje**.
+* Médicos por cada 10,000 habitantes, es una **razón**.
+* Tasa asistencia a Secundaria (Pob. 12 a 16 años), es un **porcentaje**.
+* Viviendas con agua y desague, es un **porcentaje**.		
+* Viviendas electrificadas, es un **porcentaje**.
+
+Hagamos el subconjunto de variables que necesitemos (de la columna 7 a la 11):
+```{r, eval=FALSE}
+prov_sub=provinciasNew[c(7:11)]
+# vemos:
+head(prov_sub)
+```
+
+Estas variables son las que necesitan la función para llevar a cabo la técnica, pero hay que hacer algunos ajustes.
+
+1) El subconjunto de la data no tiene como identificar a que caso corresponde cada fila. Aquí podemos usar el _ubigeo_ o el _nombre_ tal que reemplace los números que figuran a la izquierda de la data. El único requisito es que estos valores sean **únicos**. El ubigeo lo es, pero debemos verificar si el nombre de la provincia lo es:
+
+```{r, eval=FALSE}
+numFilas=nrow(prov_sub)
+sinRepetir=length(unique(provinciasNew$provinciaNombre))
+numFilas==sinRepetir # si es TRUE, no hay repetidos
+```
+
+Como no hay nombres repetidos:
+```{r, eval=FALSE}
+row.names(prov_sub)=provinciasNew$provinciaNombre
+# ver
+head(prov_sub)
+```
+
+Ya no están los numeros; y ya tenemos asegurado que los nombres se mantengan durante el análisis.
+
+2. Las variables vienen con unidades de medición diferentes. Para que la técnica de comglomerados funcione adecuadamente, debemos llevar las variables a valores independientes de la unidad de medida:
+
+```{r, eval=FALSE}
+prov_sub.scaled<- scale(prov_sub)
+# resultado
+head(prov_sub.scaled)
+```
+
+Aquí tenemos puntuaciones Z, para todas la columnas.
+
+3. El paso que sigue es clave. Aquí debemos generar información sobre las similitudes o 'distancias' entre las filas basándonos en las columnas:
+
+```{r, eval=FALSE}
+prov_sub_d <- dist(prov_sub.scaled)
+```
+
+
+4. En _prov_sub_d_ están las distancias; lo cual utilizamo en la función aglomeradora.
+```{r, eval=FALSE}
+prov_sub_clusters=hclust(prov_sub_d)
+```
+
+Los resultados se exploran visualmente mediante el **dendograma**:
+```{r, eval=FALSE}
+plot(prov_sub_clusters,main='Conglomerados',cex=0.4)
+```
+
+Como se ve arriba, cada provincia comenzó aislada en la parte inferior, y luego se van conglomerando. 
+
+La técnica muestra el proceso de conglomeración. Por lo general, uno revisa el dendograma y  decide a partir de él  cuantos conglomerados usar, a partir de esta gráfica. 
+
+Si uno decidiése por cuatro conglomerados, tendría que calcularse así:
+
+```{r, eval=FALSE}
+grupo <- cutree(prov_sub_clusters, k = 4)
+```
+
+Para ver quiénes están en el conglomerado, por ejemplo, '4', sería así:
+```{r, eval=FALSE}
+row.names(prov_sub)[grupo == 4] 
+```
+
+Este es un data frame con los grupos asignados a cada provincia:
+
+```{r, eval=FALSE}
+asignaciones=as.data.frame(grupo) # convierto a data frame
+# que tengo:
+head(asignaciones)
+```
+```{r, eval=FALSE}
+asignaciones$provincia=row.names(asignaciones) # paso los nombres a columna 
+# que tengo:
+head(asignaciones)
+```
+
+Reseteo los nombres de fila:
+```{r, eval=FALSE}
+row.names(asignaciones)=NULL
+# esto queda así
+head(asignaciones)
+```
+
+**IMPORTANTE**: Si calculásemos clusters con data de otro año, podríamos comparar si una provincia ha mejorado o decaído de uno a otro a año.
+
+Nótese que el número asignada a cada conglomerado no representa ningun orden; es decir, estar en el cluster 2 puede ser mejor que estar en el 1. Para evitar ello, debemos juntar la data qué informa sobre el cluster y la data original:
+
+```{r, eval=FALSE}
+# recuperando los datos de provincia en una copia.
+# asi evito alterar prov_sub en caso la necesite intacta luego.
+copia_prov_sub=prov_sub
+copia_prov_sub$provincia=row.names(copia_prov_sub)
+```
+
+Juntemos la data:
+```{r, eval=FALSE}
+# Añadiendo la información de clusters a esta data:
+copia_prov_sub=merge(copia_prov_sub,asignaciones)
+row.names(copia_prov_sub)=NULL # reseteando nombre de fila
+str(copia_prov_sub)
+```
+
+Sabiendo que grupo está en la data, pedimos los valores medios:
+```{r, eval=FALSE}
+
+aggregate(cbind(identificacion2012,medicos2012,escolaridad2012,AguaDesague2012,
+                electrificacion2012) ~ grupo, data=copia_prov_sub,FUN=mean)
+```
+
+Como se nota, usando la media podríamos renumerar los clustes con valores más informativos, es decir, recodificar esa columna para que represente orden ascendente o descendente (y no en desorden cómo está ahi: peor es el 2, de ahi 3, de ahi 1 y el mejor el 4). 
+
+El corte en 4 grupos se puede ver así:
+
+```{r, eval=FALSE}
+plot(prov_sub_clusters, cex = 0.6)
+rect.hclust(prov_sub_clusters, k = 4, border = c('red','blue','gray','green'))
+```
+
+
+Resaltar el 4 sería así:
+
+```{r, eval=FALSE}
+plot(prov_sub_clusters, cex = 0.6)
+rect.hclust(prov_sub_clusters, k = 4, border = 'red',which = 4)
+```
+
+El dendograma nos muestra el proceso de aglomeración, pero nosotros debemos decidir con cuantos clusters quedarnos.
+
+Lo interesante es que no hay una manera certera de decidir cuántos clusters debemos elegir. De hecho hay diversos indices creados para _sugerir_ cuántos. Estos indices podemos verlos de esta manera:
+
+```{r, eval=FALSE}
+library(NbClust)
+
+#usar aqui las variables normalizadas: prov_sub.scaled
+nb <- NbClust(prov_sub.scaled, method = "complete") # 'hclust' usa este método por defecto
+
+```
+
+Del reporte anterior, se ve que la sugerencia depende de la regla de la mayoria: usar TRES clusters. El resultado anterior se puede plotear así:
+
+```{r, eval=FALSE}
+library(factoextra) # toma su tiempo
+fviz_nbclust(nb) + theme_minimal()
+```
+
+El paquete _factoextra_ tiene su propia función para calcular conglomerados ('eclust').
+
+```{r, eval=FALSE}
+# resultado de factoExtra (FE)
+prov_sub_clusters_FE <- eclust(prov_sub.scaled, FUNcluster ="hclust", k = 4,
+                method = "complete", graph = FALSE) 
+fviz_dend(prov_sub_clusters_FE, rect = TRUE, show_labels = FALSE) 
+```
+
+Este resultado también guarda los clusters:
+```{r, eval=FALSE}
+head(as.data.frame(prov_sub_clusters_FE$cluster))
+```
+
+Nótese que los resultados de esta función han salido iguales a los hallados con el **hclust** básico.
+
+Lo importante de este paquete es que nos permite validar qué tan buena ha sido nuestra aglomeración. Para ello calcula las **siluetas**:
+
+```{r, eval=FALSE}
+fviz_silhouette(prov_sub_clusters_FE)
+```
+
+Un valor cercano a **uno** indica que el valor está bien aglomerado, si está cercano a cero indica que esta entre dos conglomerados, y si es negativo, que está en un cluster erróneo (al algoritmo acabó y no pudo ubicarlo en el grupo adecuado).
+
+El objeto *prov_sub_clusters_FE* guarda esta información de silueta. Para acceder a ella tenemos:
+
+```{r, eval=FALSE}
+siluetas <-prov_sub_clusters_FE$silinfo$widths
+```
+
+Para ver los que están mal agrupados tenemos:
+
+```{r, eval=FALSE}
+siluetas[siluetas$sil_width<0,]
+```
+
+Ya sabemos que si a loss resultados que acabamos de ver les aplicamos la función *as.data.frame* podremos manipularlos como cualquier tabla de datos.
+
+### NOTA IMPORTANTE:
+
+Cuando utilizamos la función **scale** para normalizar las variables usamos los valores por defecto de esa función, es decir, la _media_ y la _desviación típica_. Podríamos usar las medianas y la desviaciónes de la mediana en vez de ellas:
+
+```{r, eval=FALSE}
+medians = apply(prov_sub,2,median)
+mads = apply(prov_sub,2,mad)
+prov_sub.scaled2 = scale(prov_sub,center=medians,scale=mads)
+```
+
+Habrán cambios cualitativos si usamos estos nuevos valores? 
+
+```{r, eval=FALSE, echo=FALSE}
+library(NbClust)
+nb <- NbClust(df.scaled2, distance = "minkowski", min.nc = 2,
+        max.nc = 10, method = "ward.D2", index ="all")
+
+```
+```{r, eval=FALSE, echo=FALSE}
+library(factoextra)
+fviz_nbclust(nb) + theme_minimal()
+```
+
+
+```{r, eval=FALSE, echo=FALSE}
+res.hc <- eclust(df.scaled2, "hclust", k = 3,hc_metric='minkowski',
+                method = "ward.D2", graph = FALSE) 
+fviz_dend(res.hc, rect = TRUE, show_labels = FALSE) 
+```
+```{r, eval=FALSE, echo=FALSE}
+fviz_silhouette(res.hc)
+```
+
+
+
+```{r, eval=FALSE, echo=FALSE}
+sil <-res.hc$silinfo$widths
+neg_sil_index <- which(sil[, 'sil_width'] < 0)
+sil[neg_sil_index, , drop = FALSE]
+```
+
+
+<a id='cleaning'></a>
+
+## Preparación de la data multivariada
+
+La data original es esta en el archivo "idePeru.xlsx" que lo puede descargar de [aquí](https://github.com/PoliticayGobiernoPUCP/EstadisticaPoliticaGobiernoII/raw/master/sesiones/data/idhPeru.xlsx).
+
+Descargue la data y guardela en la carpeta _data_. Desde ahí comience a trabajar:
+
+```{r, eval=FALSE}
+library(openxlsx)
+folder='data'
+fileName='idePeru.xlsx'
+fileToRead=file.path(folder,fileName)
+cualHoja=1
+datos<- read.xlsx(fileToRead, cualHoja)
+head(datos,10)
+```
+
+Esta data tiene malos títulos:
+```{r, eval=FALSE}
+names(datos)
+```
+
+
+**Openxlsx** es muy eficiente, pues inclusive omite columnas vacías. Sin embargo, vemos que la data no inicia donde debe, los titulos no corresponden a las columnas; y, aunque las Provincias figuran en cada fila, los Departamentos no están en las filas, sino como titulos para las provincias (y por aún no hay distritos, aunque la hoja muestra ese nombre). Arreglemos esto.
+
+
+```{r, eval=FALSE}
+filaInicial=4 # Desde aquí comienzas a leer. Asegúrese que no pierde titulos.
+datos=read.xlsx(fileToRead, 
+                sheet = 1, 
+                startRow = filaInicial, 
+                skipEmptyRows = TRUE, skipEmptyCols = TRUE)
+
+# ver:
+head(datos)
+```
+
+Es importante que la **filaInicial** permita que la data que recuperes te de los titulo, no como el caso anterior, veamos que tenemos antes:
+```{r, eval=FALSE}
+names(datos)
+```
+
+Este es buen comienzo. Ahora veamos si las últimas filas tienen data, u elementos innecesarios:
+
+```{r, eval=FALSE}
+tail(datos,10)
+```
+
+La data acaba en la fila 222, con la provincia de **Purus**. Eliminemos filas innecesarias:
+
+```{r, eval=FALSE}
+# no queremos de la fila 223 a la 226 (nota la ',')
+datos=datos[-c(223:226),] # para eliminar 4 ultimas filas use también: datos=head(datos,-4)
+```
+
+El encabezado también puede tener filas innecesarias:
+
+```{r, eval=FALSE}
+head(datos)
+```
+
+Piensa en la esquina superior izquierda de un **cuadrado** (tabla) cuando quieras eliminar filas: éste puede comenzar en el ubigeo de AMAZONAS. De ahí que las filas 1 al 3 nos innecesarias:
+
+```{r, eval=FALSE}
+datos=datos[-c(1:3),] # para eliminar 3 primeras filas use también: datos=tail(datos,-3)
+
+# asi va quedando:
+head(datos)
+```
+
+Piensa estratégucamente ahora. Los ubigeos tienen mezclados los de Departamento o Región con los de provincia en la misma columna (la X1). Pero en la columna de al lado (X2) hay celdas vacias salvo cuando aparece el nombre de la region. Creemos entonces dos subsets (subtabla de _datos_), uno para región y otro para distrito.
+
+Primero lo de regiones:
+```{r, eval=FALSE}
+queColumnas=c(1,2)
+regiones=datos[,queColumnas] # subtabla 'regiones' (subset de 'data') / note donde está la coma','
+# asi va
+head(regiones,10)
+```
+
+Vemos que los ubigeos que tiene al lado las celdas vacías (_NA_) son ubigeos de provincias; de ahí que esas filas no las necesitamos. Pidamos a R que _regiones_ se quede con las filas (**cases**) que tengan valores completos:
+```{r, eval=FALSE}
+regiones=regiones[complete.cases(regiones),] # note la posición de la coma ','
+# así va:
+regiones
+```
+
+Pues tenemos todos los departamentos del Perú con sus ubigeos. Sólo faltaría darle nombre a sus columnas
+
+```{r, eval=FALSE}
+nombresNuevos=c('regionUbigeo','regionNombre')
+names(regiones)=nombresNuevos
+
+# asi va:
+head(regiones)
+```
+
+Regresemos a 'data':
+```{r, eval=FALSE}
+#veamos:
+head(datos)
+```
+
+En _X1_ están los ubigeos de las provincias, pero también de los departamentos. En _X2_ aparecen los nombres de los departamentos, y en _X3_ los nombres de las provincias. Con esta información creemos la subtabla provincias:
+
+* Eliminemos la segunda columna (*X2*) pues no es necesaria:
+```{r, eval=FALSE}
+queColumnas=c(2)
+provincias=datos[,-queColumnas] # subtabla 'provincoas' (subset de 'data') / note donde está la coma','
+
+# asi va:
+head(provincias,10)
+```
+
+Veamos que columnas tenemos:
+```{r, eval=FALSE}
+names(provincias)
+```
+
+_X1_ y _X3_ son necesarias, ahi están los ubigeos de las provincias y sus nombres. Todas las otras que comienzan con X son los rankings, y no los necesitamos. Vemos que sus posiciones como columna van de la 4 a la 16 saltando uno, osea sus posiciones son:
+
+```{r, eval=FALSE}
+seq(4,16,2)  # seq(inicio, fin, salto)
+```
+
+Gracias a este comando, podemos eliminar esas columnas
+```{r, eval=FALSE}
+queColumnas=seq(4,16,2)
+provincias=provincias[,-queColumnas]
+
+# estas columnas quedan:
+names(provincias)
+```
+
+Renombremos las dos primeras columnas
+```{r, eval=FALSE}
+names(provincias)[c(1,2)]=c('provinciaUbigeo','provinciaNombre')
+
+# asi va:
+head(provincias)
+```
+
+Todas las filas de provincias tienen la data completa. Pero esta tabla o cuadrado hay que reducirlo: donde estan los ubigeos de departamento hay una celda vacia, y la data de esas filas son los totales del departamento. De ahí que quedemosnos solo con las filas de provincias (asi se llama la subtabla). Para eliminar las filas (casos) de los departamentos, digamosle nuevamente a R que se quede con la data completa, y como las filas de departamento tienen una celda con _NA_, esa fila se eliminará. 
+```{r, eval=FALSE}
+provincias=provincias[complete.cases(provincias),]
+
+# asi va:
+head(provincias,10)
+```
+
+
+**ADVERTENCIA**: El comando anterior puede eliminar a una fila con data de provincia si es que alguna de sus celdas tenía un _NA_. Un comando que garantice quedarse con las filas donde una celda esté vacía en alguna columna en particular es:
+```{r ejeplo, eval=FALSE}
+provincias[complete.cases(provincias$provinciaNombre),]
+```
+
+Por un asunto _decorativo_, simplifiquemos los otros nombres de columnas:
+```{r, eval=FALSE}
+names(provincias)
+```
+
+De ahí que podemos cambiar:
+```{r, eval=FALSE}
+# estamos cambiando los nombres de la columna 3 hasta la 9
+# hay que ingresar los nombres en el orden que se requiere
+names(provincias)[c(3:9)]=c('pob2012','ide2012','identificacion2012','medicos2012','escolaridad2012','AguaDesague2012','electrificacion2012')
+
+# asi queda
+head(provincias)
+```
+
+La data está casi lista, pero queda verificar que la data a a poder ser tratada de la manera esperada. Por ejemplo, debería ser posible sacar la media aritmetica de la column población (*pob2012*):
+
+```{r, eval=FALSE}
+mean(provincias$pob2012)
+```
+
+Si aplicas una función numérica, y sale error, es por que quizas los datos tengan problemas. Aqui es necesario ver la e**str**uctura:
+```{r, eval=FALSE}
+str(provincias)
+```
+
+Las funciones numéricas no pueden aplicarse a los textos ('chr'), y todos los numeros aparecen como texto. La función **as.numeric** debe aplicarse a varias columnas:
+```{r nowork, eval=FALSE}
+# ESTO NO FUNCIONA!!!!!!
+as.numeric(provincias[,c(3:9)])
+```
+
+Si fuera sólo una columna, el comando anterior hubiera funcionado. Como son varias, hay que decirle a R que aplique esta función **columna por columna**; para eso tenemos **lapply**:
+
+```{r, eval=FALSE}
+provincias[,c(3:9)]=lapply(provincias[,c(3:9)],as.numeric)
+# ahora
+str(provincias)
+```
+
+Ahora si funciona:
+```{r, eval=FALSE}
+mean(provincias$pob2012) # si hay NA, hay que escribir: mean(provincias$pob2012,na.rm=T), para obviarlos
+```
+
+Veamos la data de nuevo, provincias:
+
+```{r, eval=FALSE}
+head(provincias)
+```
+
+... y departamentos (que le hemos llamado regiones):
+
+```{r, eval=FALSE}
+head(regiones)
+```
+
+Como queremos que el departamento aparezca al costado de su región, sabemos que necesitamos juntar de nuevo ambas subtablas. Esto es algo trivial, _si ambas tablas tienen una columna en común_: la columna llave (o _key_). 
+
+La key debemos ponerla en la subtabla mayor, es decir la de provincias. Afortunadamente, del ubigeo de provincia podemos crear el ubigeo de departamento, para asi tener la key en ambas.
+
+Esto simplemente significa: 
+
+1. Retener los dos primeros digitos del ubigeo de provincia.
+2. Añadirle '0000' a la cola de lo que acabamos de retener.
+
+Esto sería así, usando el comando **paste0**:
+```{r, eval=FALSE}
+retenidos=substr(provincias$provinciaUbigeo,1,2)
+aLaCola='0000'
+# 'paste0' se encarga de pegar/añadir:
+provincias$regionUbigeo=paste0(retenidos,aLaCola)
+```
+
+Como ya tenemos una key, podemos juntar ambas subtablas usando el comando **merge**:
+
+```{r, eval=FALSE}
+provinciasNew=merge(provincias,regiones,
+                    by.x = 'regionUbigeo',
+                    by.y='regionUbigeo',
+                    all.x = TRUE) # Esto detecta si alguna provincia no encontró Region.
+```
+
+
+_provinciasNew_ es la tabla que integra las anteriores. El comando **merge** lo he escrito de manera super explicita, pues no necesitaba indicar los keys en los argumentos *by.x* ni *by.y*: cuando las keys de ambas subtablas llevan el mismo nombre no se necesita. Osea el comando anterior pudo ser: 
+```{r, eval=FALSE}
+provinciasNew=merge(provincias,regiones,all.x = TRUE) # all.X si lo dejo
+```
+
+La data está casi lista:
+
+```{r, eval=FALSE}
+head(provinciasNew)
+```
+
+Como hemos creado variables y realizado _merges_, los nombres puede que no figuren en buen orden:
+```{r, eval=FALSE}
+names(provinciasNew)
+```
+
+
+Sería mejor reubicar las posiciones:
+```{r, eval=FALSE}
+# jugando con la posiciones:
+provinciasNew=provinciasNew[,c(1,2,11,3:10)] 
+
+# quedando:
+head(provinciasNew)
+```
+
+
+```{r, echo=FALSE, eval=FALSE}
+write.xlsx(provinciasNew,"data/IDE_limpio.xlsx")
+```
+
+[ir al inicio de la página](#beginning)
+
+####[VOLVER AL SILABO](https://politicaygobiernopucp.github.io/EstadisticaPoliticaGobiernoII/)
