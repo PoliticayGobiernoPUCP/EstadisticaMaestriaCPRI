@@ -1,7 +1,7 @@
 <br> 
 <center><img src="http://i.imgur.com/tveTlt8.png" width="300"></center>
 
-## Course: Estadística Para el Análisis Político II<br> Semestre 2017-II<br> 
+## Curso: Estadística Para el Análisis Político<br> Semestre 2018-I<br> 
 ### Prof. José Manuel Magallanes, PhD 
 ____
 ## **Leyendo Data desde R**
@@ -15,22 +15,23 @@ Los datos pueden estar organizados por terceros. Si es así, debemos poder leer 
 
 Otras veces, uno mismo recogerá los datos. Si los datos representan alguna población en su totalidad no tendremos data sesgada; si no, habrá que hechar mano de algun proceso de muestreo. Veamos los siguientes casos:
 
-1. [Propietary software.](#part1) 
-2. [Recolección Ad-hoc.](#part2) 
-3. [Uso de APIs.](#part3) 
-4. ['Scraping' tablas de datos.](#part4) 
-5. [Leyendo datos espaciales.](#part5) 
+1. [Leyendo SPSS](#part1) 
+2. [Leyendo XLSX](#part2) 
+3. [Leyenco CSV](#part3) 
+4. [Leyendo datos espaciales](#part4) 
 
-Tener en claro la ubicación de los archivos es muy importante. Crear una carpeta para los datos en la maquina de uno es la alternativa clásica, pero si es posible usar el link hacia algun repositorio puede ser más eficiente. Si los archivos estarán en la máquina, los siguientes comandos de R son de utilidad:
+Tener en claro la ubicación de los archivos es muy importante. Crear una carpeta para los datos nuestra maquina es la alternativa clásica, pero si es posible usar el link hacia algun repositorio puede ser más eficiente. Si los archivos estarán en la máquina, los siguientes comandos de R son de utilidad:
+
 ```{r, eval=FALSE}
-# # where am I?
+# # con qué carpeta estoy trabajando?
 getwd()
 ```
+
 Acabas de ver donde estás, si quieres cambiar debes utilizar:
 ```{r, eval=FALSE}
 setwd()
 ```
-La ubicación que necesitas debe estar en los parentesis.
+La ubicación de tu carpeta de trabajo debe estar en los parentesis.
 
 Windows y Mac no describen las rutas de los directorios de la misma manera, por lo que es mejor usar el comando **file.path()**:
 ```{r, eval=FALSE}
@@ -43,153 +44,96 @@ En _fileToRead_ estará la ruta correcta. Si hubiera una mayor secuencia de fold
 
 ____
 
-
 <a id='part1'></a>
 
-## Data de 'proprietary software'
-
-*Leyendo SPSS:
+## Leyendo SPSS
 
 Abramos este archivo desde el _American National Election Studies Survey_ (ANES):
 ```{r, eval=FALSE}
-#install 'haven' first! (se toma su tiempo!)
+#instalemos el paquete "haven" primero (se toma su tiempo!)
 library(haven)
 folder="data"
 fileName="anes_timeseries_2012.sav"
 fileToRead=file.path(folder,fileName)
 dataSpss=read_sav(fileToRead)
 ```
-En **dataSpss** está un gran archivo. Además no es aun una tabla de datos (dataframe). Creemos un dataframe con dos variables ("libcpre_self","libcpo_self"), un par de preguntas  pre y post eleccions donde se solicita ubicarse en algun valor de 7 puntos, cuyos extremos son ‘extremely liberal’ y ‘extremely conservative’: 
+
+En **dataSpss** está un gran archivo. Creemos una data frame (base de datos) con dos variables de interés: "libcpre_self","libcpo_self". Dichas variables son resultado de un par de preguntas pre y post elecciones donde se solicita al encuestado ubicarse en algún punto de una escala de 1-7 puntos, cuyos valores extremos son "extremadamente liberal"" y "extremadamente conservador": 
+
 ```{r, eval=FALSE}
 varsOfInterest=c("libcpre_self","libcpo_self")
 dataSpssSub=as.data.frame(dataSpss)[varsOfInterest]
-head(dataSpssSub)
+head(dataSpssSub) #veamos las primeras filas de nuestra data 
 ```
 
-El archivo anterior en formato STATA:
-```{r, eval=FALSE}
-fileName="anes_timeseries_2012.dta"
-fileToRead=file.path(folder,fileName)
-dataStata=read_dta(fileToRead)
-dataStataSub=as.data.frame(dataStata)[varsOfInterest]
-head(dataStataSub)
-```
 
-Otro formato propietario de mucho uso es el de las hojas de cálculo en Excel:
+[Go to page beginning](#beginning)
+
+____
+
+<a id='part2'></a>
+
+## Leyendo XLSX
+
+Otro formato propietario de mucho uso es el de las hojas de cálculo en Excel. A continuación cargaremos la data del Índice de Desarrollo Humano, elaborado por PNUD, para Perú en el año 2012. La información se encuentra a nivel de provincias. 
+
 ```{r, eval=FALSE}
+#instalemos el paquete "readxl" primero
 library(readxl)
 fileName='idhPeru.xlsx'
 fileToRead=file.path(folder,fileName)
 dataExcel=read_excel(fileToRead)
-head(dataExcel)
+head(dataExcel) #Veamos las primeras filas
 ```
 
-Al ejecutar el comando anterior, verás que la data se crga pero necesita algo de organización (así la prepara Nacionaes Unidas...ni modo).
-
-
+- Ubigeo: Identificación de las provincias.
+- PROVINCIA: Nombre de cada provincia.
+- habitantes: número de habitantes.
+- IDH: Índice de Desarrollo Humano. 
+- esperanza: Esperanza de vida al nacer (años).
+- secundaria: Porcentaje de población con educación secundaria completa. 
+- educa: Años de educación promedio de la población de 25 años a más. 
+- percapitaf: Ingreso familiar per cápita. 
 
 [Go to page beginning](#beginning)
 
-----
-
-<a id='part2'></a>
-
-## Recolección ad-hoc
-
-Podemos muchas veces usar los formularios de Google Docs para recoger información. Por ejemplo,  visite este [link](https://goo.gl/forms/Xw0um8hidWwbEPcF2). 
-
-Luego, hay que producir un URL para la data creada.
-
-```{r, eval=FALSE}
-
-require(RCurl)
-# obtained from google docs:
-link='https://docs.google.com/spreadsheets/d/1bDMM5s3PDC5awrSkILFRPJMlQ0j95TtVxErvvNNOHPU/pub?output=csv'
-
-# getting info
-myCsv <- getURL(link)
-# to change column names:
-namesOfCols=c('timeStamp','nombre','apellido','tipoCole', 'lugarNace','edad','sexo', 'religion')
-
-# parsing as csv
-myData=read.csv(textConnection(myCsv),col.names=namesOfCols)
-
-head(myData)
-
-```
-
-[Go to page beginning](#beginning)
-
------
+____
 
 <a id='part3'></a>
 
-## Uso de los APIs
+## Leyendo CSV
 
-Hay organizaciones que tiene una política de datos abiertos, por lo que ofrecen mecamismos para que se pueda acceder a sus datos. Los formatos son por lo general  XML o JSON. Traigamos la data producida por el servicio '9-1-1' de la Policia de Seattle, Washington:
+Otro formato propietario de mucho uso es el de valores separados por comas (CSV). Cargaremos la data del Índice de Densidad Estatal, elaborado por PNUD, para Perú en el año 2012. La información se encuentra a nivel de provincias. 
+
 ```{r, eval=FALSE}
-#install.packages("jsonlite")
-library(jsonlite) 
-endPoint="https://data.seattle.gov/resource/pu5n-trf4.json" 
-data911 = fromJSON(endPoint)
-head(data911)
+library(foreign)
+folder="data"
+fileName="idePeru2012.csv"
+fileToRead=file.path(folder,fileName)
+dataCsv=read.csv(fileToRead)
+head(dataCsv) #Veamos las primeras filas
 ```
+
+- Ubigeo: Identificación de las provincias.
+- PROVINCIA: Nombre de cada provincia.
+- IDE: Índice de Densidad Estatal. 
+- identidad: Porcentaje de población con acta de nacimiento o DNI.
+- salud: Número de médicos por cada 10,000 habitantes.
+- educacion: Tasa de asistencia a secundaria (pob. de 12 a 16 años).
+- saneamiento: Porcentaje de viviendas con agua y desague. 
+- electrificacion: Porcentaje de viviendas elecrificadas. 
+- poblacion: Número de habitantes.
+- costa: Provincia ubicada en la costa (SI/NO).
+- capital: Provincia capital de la región (SI/NO).
+- tamano: Clasificación de provincias según tamaño (1-5). 
 
 [Go to page beginning](#beginning)
 
-----
+____
 
+----
 
 <a id='part4'></a>
-
-
-##‘Scraping’ tablas de datos
-
-Aqui descargaremos los datos de esta [wikipage](https://en.wikipedia.org/wiki/List_of_freedom_indices)
-
-```{r, eval=FALSE}
-# Install: XML, RCurl
-# Activate
-library(XML)
-library(RCurl)
-
-# URL
-wiki="https://en.wikipedia.org/wiki/" 
-link = "List_of_freedom_indices" 
-
-# Data
-wikiLinkContents = getURL(paste0(wiki,link)) 
-wikiTables = readHTMLTable(wikiLinkContents,
-                           stringsAsFactors=FALSE)
-```
-
-Vemos que tenemos:
-    
-```{r, eval=FALSE}
-#data frame:
-is.data.frame(wikiTables)
-#list:
-is.list(wikiTables)
-# how many?
-length(wikiTables)
-```
-
-Al visitar la web, nos damos cuenta la tabla de interés es la segunda:
-```{r, eval=FALSE}
-idx=wikiTables[[2]]
-str(idx)
-```
-  
-Una breve mirada:
-```{r, eval=FALSE}
-head(idx)
-```
-  
-[Go to page beginning](#beginning)
-
-----
-
-<a id='part5'></a>
 
 ## Recolectando Datos espaciales
 
@@ -199,23 +143,25 @@ El formato RDS de R puede almacenar este tipo de información. Por ejemplo, si v
 
 ```{r, eval=FALSE}
 library(sp) 
-PeruRegs <- readRDS(gzcon(url("http://biogeo.ucdavis.edu/data/gadm2.8/rds/PER_adm1.rds")))
+PeruRegs <- readRDS(gzcon(url("http://biogeo.ucdavis.edu/data/gadm2.8/rds/PER_adm1.rds"))) # la información está a nivel de regiones! 
 ```
 
 PeruRegs ya tiene la información. Si solo quieres ver los datos de cada unidad debes hacer:
 
 ```{r, eval=FALSE}
-PeruRegs@data
+PeruRegs@data #vemos la data
 ```
 Aqui grafico:
 ```{r, eval=FALSE}
-plot(PeruRegs)
+plot(PeruRegs) #veamos el mapa 
 ```
 
 Un formato más común son los mapas en SHAPEFILE. Hay un directorio dentro del folder _data_ donde estan varios mapas de limites administrativos del Perú:
+
 ```{r, eval=FALSE}
-folderMap='PER_adm_shp'
-fileName='PER_adm1.shp' # nivel 1 son regiones
+folder="data"
+folderMap="provinciasPeru"
+fileName="provinciasPeru.shp"  #la información en este caso está a nivel de provincias
 fileToRead=file.path(folder,folderMap,fileName)
 
 library(maptools)
@@ -223,25 +169,14 @@ library(rgeos)
 PeruRegs_shp=readShapePoly(fileToRead)
 ```
 
-*PeruRegs_shp* tiene el mapa, pero salió un _warning_ que podemos obviar. El gráfico aún funciona:
+*PeruRegs_shp* tiene el mapa. Salió un _warning_ pero lo podemos obviar. El gráfico funciona (demora un poco):
+
 ```{r, eval=FALSE}
-plot(PeruRegs_shp)
+plot(PeruRegs_shp) #veamos el mapa 
 ```
 
-Si hacemos caso al _warning_ anterior: 
-```{r, eval=FALSE}
-library(rgdal)
-library(sf)
-PeruRegs_shp <- rgdal::readOGR(fileToRead)
+[Go to page beginning](#beginning)
 
-```
-
-Sin problema, el mapa se dibujará.
-```{r, eval=FALSE}
-plot(PeruRegs_shp)
-```
-
-_____
-<br></br>
+____
 
 ####[VOLVER AL SILABO](https://politicaygobiernopucp.github.io/EstadisticaPoliticaGobiernoII/)

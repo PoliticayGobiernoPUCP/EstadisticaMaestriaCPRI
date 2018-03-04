@@ -22,6 +22,7 @@ colnames(idhPeru) <- c("Ubigeo", "PROVINCIA", "habitantes", "IDH", "esperanza", 
 rownames(idhPeru) <- 1:nrow(idhPeru)
 
 idhPeru$PROVINCIA <- toupper(idhPeru$PROVINCIA) # mayusculas 
+library(stringi)
 idhPeru$PROVINCIA <- stri_trans_general(idhPeru$PROVINCIA,"Latin-ASCII") #quitar tildes y ñs 
 
 ##Callao y Carlos Fermin estan bien. arreglar DANIEL A. CARRION
@@ -140,7 +141,7 @@ colnames(idePeru) <- c("Ubigeo", "PROVINCIA", "habitantes", "IDE", "identidad", 
 
 idePeru$PROVINCIA <- toupper(idePeru$PROVINCIA) #mayusculas 
 idePeru$PROVINCIA <- stri_trans_general(idePeru$PROVINCIA,"Latin-ASCII") #quitar tildes y ñs 
-##Callao y Carlos Fermin estan bien. arreglar DANIEL A. CARRION
+##Callao esta bien. arreglar CARLOS FERMIN y DANIEL A. CARRION
 idePeru$PROVINCIA[idePeru$PROVINCIA == "DANIEL A. CARRION"] <- "DANIEL ALCIDES CARRION"
 idePeru$PROVINCIA[idePeru$PROVINCIA == "CARLOS FERMIN FITZCARRALD"] <- "CARLOS F. FITZCARRALD"
 
@@ -148,7 +149,34 @@ idePeru$PROVINCIA[idePeru$PROVINCIA == "CARLOS FERMIN FITZCARRALD"] <- "CARLOS F
 idePeru$PROVINCIA[idePeru$PROVINCIA == "SATIPO 1/"] <- "SATIPO"
 
 write.xlsx(idePeru, "idePeru.xlsx")
+write.csv(idePeru, "idePeru.csv")
+
 
 d3<-merge(mapa,poblacion, by.x="PROVINCIA", sort=FALSE, all.x = T, all.y = T) 
 
+
+####ideperu2012.csv
+
+library(foreign)
+
+idePeru2<- read.csv("idePeru2012.csv",encoding="latin1")
+
+#eliminar columnas innecesarias
+idePeru2<- idePeru2[,-c(2:3)]
+
+colnames(idePeru2) <- c("Ubigeo", "PROVINCIA", "IDE", "identidad", "salud", "educacion", "saneamiento", "electrificacion", "poblacion", "costa", "capital", "tamano")
+idePeru2$PROVINCIA <- as.character(idePeru2$PROVINCIA)
+
+idePeru2$PROVINCIA <- toupper(idePeru2$PROVINCIA) #mayusculas 
+
+#arreglar problemas con las ñ
+idePeru2$PROVINCIA <- gsub("Ï", "N", idePeru2$PROVINCIA) #solucionar problema de encoding 
+
+idePeru2$PROVINCIA[idePeru2$PROVINCIA == "DANIEL A. CARRION"] <- "DANIEL ALCIDES CARRION"
+idePeru2$PROVINCIA[idePeru2$PROVINCIA == "CARLOS FERMIN FITZCARRALD"] <- "CARLOS F. FITZCARRALD"
+
+##Problema con Satipo:
+idePeru2$PROVINCIA[idePeru2$PROVINCIA == "SATIPO 1/"] <- "SATIPO"
+
+write.csv(idePeru2, "idePeru2012.csv", row.names=FALSE)
 
