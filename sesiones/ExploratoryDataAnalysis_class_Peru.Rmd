@@ -1,7 +1,7 @@
 <br> 
 <center><img src="http://i.imgur.com/tveTlt8.png" width="300"></center>
 
-## Course: Estadística Para el Análisis Político II<br> Semestre 2017-II<br> 
+## Curso: Estadística Para el Análisis Político<br> Semestre 2018-I<br> 
 ### Prof. José Manuel Magallanes, PhD 
 ____
 ## **Exploración de Datos**
@@ -39,47 +39,48 @@ Los contenidos para esta sesión se organizan asi:
 
 ## <span style="color:blue"> Exploración de variables dicotómicas</span>
 
-Carguemos la data:
+Carguemos una data de LAPOP:
+
 ```{r, eval=FALSE}
-library(RCurl)
-link='https://docs.google.com/spreadsheets/d/1bDMM5s3PDC5awrSkILFRPJMlQ0j95TtVxErvvNNOHPU/pub?gid=914658997&single=true&output=csv'
-myCsv <- getURL(link)
-namesOfCols=c('timeStamp','nombre','apellido','tipoCole','distritoNace','regionNace','edad','sexo', 'religion')
-# parsing as csv
-myData=read.csv(textConnection(myCsv),col.names=namesOfCols)
+library(foreign)
+folder="data"
+fileName="PeruLAPOP2014.sav"
+fileToRead=file.path(folder,fileName)
+variables=c("estratopri","b18", "vic1ext", "q1", "q2")
+dataLAPOP=read.spss(fileToRead, to.data.frame=T)[variables] #ignoremos advertencias
 ```
 
-Aqui vemos como se comporta una dicotómica:
+Aqui vemos como se comporta una variable dicotómica:
 
 ```{r, eval=FALSE}
-table(myData$sexo)
+table(dataLAPOP$vic1ext)
 ```
 De manera gráfica:
 
 ```{r, eval=FALSE}
-toPlot=table(myData$sexo)
-barplot(toPlot,col='lightblue',
-        xlab='Sexo',
-        ylab='Conteo de alumnos',
-        main='Distribución de sexo en el aula')
+toPlot=table(dataLAPOP$vic1ext)
+barplot(toPlot,col="blue", #color del gráfico
+        xlab="Victimas de delincuencia", 
+        ylab="Conteo de encuestados",
+        main="Distribución encuestados según victimización")
 ```
 
 Para verlo como porcentajes tenemos:
 
 ```{r, eval=FALSE}
-prop.table(table(myData$sexo)) # como plotearias estos resultados?
+prop.table(table(dataLAPOP$vic1ext)) # como plotearíamos estos resultados?
 ```
 
-Es util saber si la diferencia es significativa usando la prueba $\chi^2$ :
+Es útil saber si la diferencia es significativa usando la prueba $\chi^2$ :
 ```{r, eval=FALSE}
-distribution=table(myData$sexo)
-chisq.test(distribution)
+distribucion=table(dataLAPOP$vic1ext)
+chisq.test(distribucion)
 ```
 Un valor significativo del p-value (menor a 0.05) sugiere que hay diferencias (se rechaza que haya comportamiento uniforme).
 
 En esta situación, podemos considerar que la moda es relevante:
 ```{r, eval=FALSE}
-names(distribution[which.max(distribution)]) #asi se obtiene
+names(distribucion[which.max(distribucion)]) #asi se obtiene
 ```
 
 [Inicio](#beginning)
@@ -89,99 +90,44 @@ ______
 
 ## <span style="color:blue"> Exploración de variables categoricas No Ordinales</span>
 
-Exploremos la Región de procedencia:
+Exploremos el estrato de los encuestados por LAPOP:
 
 ```{r, eval=FALSE}
-table(myData$regionNace)
+table(dataLAPOP$estratopri)
 ```
-Hay dos Limas?
-
-```{r,eval=FALSE}
-# asumo que alguien escribió "Lima " (con algun espacio en blanco)
-# así que mejor leo eliminando (stripping) los espacios en cada celda...
-myData=read.csv(textConnection(myCsv),col.names=namesOfCols,stringsAsFactors =FALSE,strip.white = TRUE) 
-# por que 'stringsAsFactors =FALSE'??
-table(myData$regionNace)
-```
-
-Simbolos raros por el lenguaje español!...veamos:
-```{r, eval=FALSE}
-names(table(myData$regionNace))
-```
-
-Buscando la ubicación, cambiamos a lo que deseamos:
-```{r, eval=FALSE}
-# esto es un problema de 'encoding'
-ancashBad=names(table(myData$regionNace))[1]
-juninBad=names(table(myData$regionNace))[5]
-
-myData$regionNace[myData$regionNace==ancashBad]='Ancash'
-myData$regionNace[myData$regionNace==juninBad] ='Junin'
-table(myData$regionNace)
-```
-
 
 Grafiquemos nuestra variable:
 
 ```{r, eval=FALSE}
-toPlot=table(myData$regionNace)
-barplot(toPlot,col='magenta',
-        xlab='Region',
-        ylab='Conteo de alumnos',
-        main='Distribución de region de nacimiento en el aula',
-        las=2)
+toPlot=table(dataLAPOP$estratopri)
+barplot(toPlot,col="magenta",
+        xlab="Zona",
+        ylab= "Conteo de encuestados",
+        main="Distribución de encuestados según zona",
+        las=2) #cambia la orientación de los nombres de las categorías
 ```
 
 Veamos la relevancia de la moda:
 
 ```{r, eval=FALSE}
-distribution=table(myData$regionNace)
+distribution=table(dataLAPOP$estratopri)
 chisq.test(distribution)
 ```
-El resultado sugiere que la moda es significativa; sin embargo, la técnica reporta que podría haber problemas en el resultado. Intentemos usar una simulación en la prueba:
-```{r, eval=FALSE}
-distribution=table(myData$regionNace)
-chisq.test(distribution, simulate.p.value = T)
-```
 
-
-Lo anterior corrobora que hay una moda sobresaliente, la cual es:
+El resultado sugiere que la moda es significativa. La moda es:
 
 ```{r, eval=FALSE}
 names(distribution[which.max(distribution)])
 ```
 
-Pero si fuera el caso de religion:
-
-```{r, eval=FALSE}
-toPlot=table(myData$religion)
-barplot(toPlot,col='magenta',
-        xlab='Region',
-        ylab='Conteo de alumnos',
-        main='Distribución de region de nacimiento en el aula')
-```
-
-Dada la distribución de los valores no modales, es posible que el peso de la moda sea menor:
-
-```{r, eval=FALSE}
-distribution=table(myData$religion)
-chisq.test(distribution)
-```
-
-Como sospechamos, la prueba no descarta que haya uniformidad.
-
 Otra manera de ver la representatividad o dispersión de la moda es mediante el uso del [Gini Index](https://en.wikipedia.org/wiki/Gini_coefficient):
+
 ```{r, eval=FALSE}
 library(DescTools)  # instalar antes!
-Gini(table(myData$religion),na.rm = TRUE) 
+Gini(table(dataLAPOP$estratopri),na.rm = TRUE) 
 ```
 
-Se diferencia el Gini de region?
-
-```{r, eval=FALSE}
-# deberia salir alto, pues Lima es una moda muy pronunciada:
-Gini(table(myData$regionNace),na.rm = TRUE)
-```
+Lima es una moda pronunciada!
 
 [Inicio](#beginning)
 
@@ -189,86 +135,45 @@ Gini(table(myData$regionNace),na.rm = TRUE)
 
 ## <span style="color:blue"> Exploración de variables categoricas Ordinales</span>
 
-Abramos nuestro archivo del _American National Election Studies Survey_ (ANES):
-```{r, eval=FALSE}
-library(haven)
-varsOfInterest=c("libcpre_self","libcpo_self")
-folder="data"
-fileName="anes_timeseries_2012.sav"
-fileToRead=file.path(folder,fileName)
-dataSpss=read_sav(fileToRead)
-dataSpssSub=as.data.frame(dataSpss)[varsOfInterest]
-```
+Exploremos visualmente la confianza en la policia de los encuestados por LAPOP:
 
-Grafiquemos:
 ```{r,eval=FALSE}
-barplot(table(dataSpssSub$libcpre_self),las=2)
+barplot(table(dataLAPOP$b18),las=1)
 ```
 
-Para saber qué representan los números:
 
 ```{r, eval=FALSE}
-attr(dataSpssSub$libcpre_self,'labels')
-```
-
-
-Recodifiquemos los negativos como 'perdidos':
-```{r, eval=FALSE}
-var=dataSpssSub$libcpre_self
-dataSpssSub$libcpre_self=ifelse(var<0,NA,var)
-```
-
-Actualicemos gráfica:
-```{r,eval=FALSE}
-theTable=table(dataSpssSub$libcpre_self)
-barplot(theTable,ylim = c(0, 2000))
-```
-
-Falta transformar esta variable en ordinal:
-
-```{r, eval=FALSE}
-dataSpssSub$libcpre_self=ordered(dataSpssSub$libcpre_self)
-head(dataSpssSub$libcpre_self)
-```
-
-Lo mismo, con más detalle:
-```{r, eval=FALSE}
-# Formatting:
-theLabels=c('XLiberal','Liberal','algo_liberal','moderado',
-            'algo_conservador','Conservador','XConservador')
-dataSpssSub$libcpre_self=factor(dataSpssSub$libcpre_self,
-                                levels = c(1:7),
-                                labels=theLabels,
-                                ordered=T)
-levels(dataSpssSub$libcpre_self)
+dataLAPOP$b18=ordered(dataLAPOP$b18)
+head(dataLAPOP$b18)
 ```
 
 Podemos calcular mediana en ordinales:
 ```{r, eval=FALSE}
-Median(dataSpssSub$libcpre_self,na.rm = T)
+Median(dataLAPOP$b18,na.rm = T)
 ```
 
 Confirmemos:
+
 ```{r, eval=FALSE}
-cumsum(prop.table(table(dataSpssSub$libcpre_self)))
+cumsum(prop.table(table(dataLAPOP$b18)))
 ```
 
 La moda es: 
 ```{r, eval=FALSE}
-Mode(dataSpssSub$libcpre_self,na.rm = T)
+Mode(dataLAPOP$b18,na.rm = T)
 ```
 
-Ambos estadísticos coinciden, confirmando la simetria que se notaba en el gráfico de barras.
+Los estadísticos no coinciden! muestra asimetría que se notaba en el gráfico de barras.
 
 ```{r, eval=FALSE}
-boxplot(dataSpssSub$libcpre_self)
+boxplot(dataLAPOP$b18)
 ```
 Comencemos a usar **ggplot2**, paquete preferido para los gráficos. Primero uno simple:
 
 ```{r, eval=FALSE}
 library(ggplot2)
-data=na.omit(dataSpssSub)
-varToPlot=as.numeric(data$libcpre_self)
+data=na.omit(dataLAPOP)
+varToPlot=as.numeric(data$b18)
 thePlot=ggplot(data, aes(x=1,y=varToPlot)) + geom_boxplot() 
 thePlot
 ```
@@ -281,6 +186,7 @@ thePlot
 Etiquetando eje:
 
 ```{r, eval=FALSE}
+theLabels=c("1=Mucho", "2", "3", "4", "5", "6", "7=mucho")
 thePlot= thePlot + scale_y_continuous(labels= theLabels,breaks=1:7) 
 thePlot
 ```
@@ -288,12 +194,12 @@ thePlot
 Otros elementos:
 
 ```{r, eval=FALSE}
-thePlot + labs(title="Title", y = 'Respuestas', x=NULL) + scale_x_continuous(labels= NULL, breaks = NULL)
+thePlot + labs(title="Confianza en la Policía Nacional del Perú", y = 'Respuestas', x=NULL) + scale_x_continuous(labels= NULL, breaks = NULL)
 ```
 
 Finalmente, veamos la dispersion:
 ```{r, eval=FALSE}
-Gini(table(dataSpssSub$libcpre_self),na.rm = T)
+Gini(table(dataLAPOP$b18),na.rm = T)
 ```
 
 [Inicio](#beginning)
@@ -302,42 +208,33 @@ Gini(table(dataSpssSub$libcpre_self),na.rm = T)
 
 <a id='Counts'></a>
 
-
 ## <span style="color:blue"> Explorando conteos</span>
 
 La variable _edad_ puede servir para ello:
 
 ```{r, eval=FALSE}
-myData$edad
+dataLAPOP$q2
 ```
 
-Pero alguien uso letras! Iré a cada celda y me quedo solo con los números:
+Convertirla en conteo: 
 ```{r, eval=FALSE}
-library(stringr)
-
-# preparar 'regular expression'
-regexp <- "[[:digit:]]+"
-
-# procesando string
-myData$edad=str_extract(myData$edad, regexp)
-myData$edad=as.numeric(myData$edad)
-myData$edad
+dataLAPOP$q2 <- as.integer(dataLAPOP$q2)
 ```
 
 Corresponde todavía el uso de barras:
 ```{r, eval=FALSE}
-ggplot(myData, aes(edad)) + geom_bar()
+ggplot(dataLAPOP, aes(q2)) + geom_bar() 
 ```
 
 Veamos sus estadísticos:
 
 ```{r, eval=FALSE}
-summary(myData$edad)
+summary(dataLAPOP$q2)
 ```
 
 Un boxplot:
 ```{r, eval=FALSE}
-ggplot(myData, aes(x = 1, y = edad)) + geom_boxplot() +coord_flip()
+ggplot(dataLAPOP, aes(x = 1, y = q2)) + geom_boxplot() +coord_flip() + labs(title="Edad Encuestados", y = "Edad", x=NULL) + scale_x_continuous(labels= NULL, breaks = NULL)
 ```
 
 [Inicio](#beginning)
@@ -349,141 +246,82 @@ ______
 
 ## <span style="color:blue"> Explorando mediciones</span>
 
-Las mediciones dan valores continuos (aceptan decimales). Busquemos una data para analizarla:
+Las mediciones dan valores continuos (aceptan decimales). Utilizemos la data de IDE: 
 
 ```{r, eval=FALSE}
-library(XML)
-library(RCurl)
-# URL
-wiki="https://en.wikipedia.org/wiki/" 
-link = "List_of_countries_by_GDP_(PPP)_per_capita" 
-
-# Data
-wikiLinkContents = getURL(paste0(wiki,link)) 
-wikiTables = readHTMLTable(wikiLinkContents,
-                           stringsAsFactors=FALSE)
+library(foreign)
+folder="data"
+fileName="idePeru2012.csv"
+fileToRead=file.path(folder,fileName)
+dataIDE=read.csv(fileToRead)
 ```
 
+Pedimos un histograma: 
 ```{r, eval=FALSE}
-# how many?
-length(wikiTables)
-```
-
-Al visitar la web, nos damos cuenta la tabla de interés es la segunda:
-```{r, eval=FALSE}
-idx=wikiTables[[2]]
-head(idx)
-```
-```{r, eval=FALSE}
-str(idx)
-```
-
-Cambiemos de nombre y con:
-```{r, eval=FALSE}
-names(idx)=c('rank','country','gdp')
-```
-
-Tratemos de volver los _gdp_ en numero:
-```{r, eval=FALSE}
-as.numeric(idx$gdp)
-```
-Lo anterior falla pues los numeros tiene comas. Usemos el comando gsub para reemplazar _comas_ por _nada_:
-```{r, eval=FALSE}
-idx$gdp=as.numeric(gsub(",", "", idx$gdp))
-idx$gdp
-```
-
-Ahora si pedimos un histograma:
-```{r, eval=FALSE}
-ggplot(idx,aes(x=gdp)) + geom_histogram()
+ggplot(dataIDE,aes(x=IDE)) + geom_histogram()
 ```
 
 ...Y nuestro boxplot:
 ```{r, eval=FALSE}
-ggplot(idx,aes(y=gdp,x=1)) + geom_boxplot() + coord_flip()
+ggplot(dataIDE,aes(y=IDE,x=1)) + geom_boxplot() + coord_flip() + labs(title="Indice de Densidad Estatal 2012", y="IDE", x=NULL) +  scale_x_continuous(labels= NULL, breaks = NULL) 
+
 ```
 
 [Inicio](#beginning)
 
 _____
 
-
 <a id='catcat'></a>
-
 
 ## <span style="color:blue">Categórico - Categórico </span>
 
-Utilicemos los datos sobre contribuciones a candidatos y sus comités políticos del estado de Washington USA. Esta data procede de aquí: [Contributions to Candidates and Political Committees](https://dev.socrata.com/foundry/data.wa.gov/74eq-kst5). 
+Utilicemos la data de LAPOP. 
 
-
+Recordemos como se distribuye _victimización_:
 ```{r, eval=FALSE}
-link='https://github.com/PoliticayGobiernoPUCP/EstadisticaPoliticaGobiernoII/blob/master/sesiones/data/governor.csv?raw=true'
-governor=read.csv(link,stringsAsFactors = F)
+table(dataLAPOP$vic1ext)
 ```
 
-Una mirada breve a lo que tenemos:
-
+... y _sexo_:
 ```{r, eval=FALSE}
-str(governor)
-```
-
-Veamos como se distribuye _party_:
-```{r, eval=FALSE}
-table(governor$party)
-```
-
-... y _election year_:
-```{r, eval=FALSE}
-table(governor$election_year)
+table(dataLAPOP$q1)
 ```
 
 La manera simple de analizar relaciones *cat-cat*  (asociación) es la **tabla de contingencia** (crosstab):
 ```{r, eval=FALSE}
-table(governor$party,governor$election_year)
+table(dataLAPOP$q1,dataLAPOP$vic1ext)
 ```
 
 Fue simple... pero R tiene otros paquetes para analizar asociación:
 
 ```{r, eval=FALSE}
 library(gmodels)
-CrossTable(governor$party,governor$election_year,prop.t=F, prop.r=F, prop.c=F,prop.chisq=F)
+CrossTable(dataLAPOP$q1,dataLAPOP$vic1ext,prop.t=F, prop.r=F, prop.c=F,prop.chisq=F)
 ```
 
-Obtengamos un _subconjunto_ de estos datos para solo enfocarnos en los Reps y Dems:
-
-```{r, eval=FALSE}
-byeCategories=c('INDEPENDENT','NONE')
-governorDR=governor[!governor$party%in% byeCategories,]
-```
-
-Analicemos una crosstab, esta vez mostrando procentajes:
-```{r, eval=FALSE}
-CrossTable(governorDR$party,governorDR$election_year,prop.t=T, prop.r=F, prop.c=F,prop.chisq=F)
-```
 Los procentajes pueden ser también por fila:
 ```{r, eval=FALSE}
-# Share along years per party:
-CrossTable(governorDR$party,governorDR$election_year,prop.t=F, prop.r=T, prop.c=F,prop.chisq=F)
+CrossTable(dataLAPOP$q1,dataLAPOP$vic1ext,prop.t=F, prop.r=T, prop.c=F,prop.chisq=F)
 ```
 ... o por columna:
 ```{r, eval=FALSE}
-# Share along parties per year:
-CrossTable(governorDR$party,governorDR$election_year,prop.t=F, prop.r=F, prop.c=T,prop.chisq=F)
+CrossTable(dataLAPOP$q1,dataLAPOP$vic1ext,prop.t=F, prop.r=F, prop.c=T,prop.chisq=F)
 ```
-
 
 Aquí también podemos usar el ${\chi}^2$ para testear si hay asociación entre variables:
 
 ```{r, eval=FALSE}
-CrossTable(governorDR$party,governorDR$election_year,prop.t=F, prop.r=F, prop.c=F,prop.chisq=F,chisq=T)
+CrossTable(dataLAPOP$q1,dataLAPOP$vic1ext,prop.t=F, prop.r=F, prop.c=F,prop.chisq=F,chisq=T)
 ```
 
-La relación detectada se refleja en el gráfico:
+El p-value indica que no hay diferencia en la victimación según sexo. 
+
+Ello se refleja en un gráfico: 
 
 ```{r, eval=FALSE}
-legendPlot=levels(as.factor(unique(governorDR$party)))
-bartable = table(governorDR$party,governorDR$election_year)  ## get the cross tab
-barplot(bartable, beside = TRUE,legend=legendPlot)  ## plot
+legendPlot=levels(as.factor(unique(dataLAPOP$q1)))
+bartable = table(dataLAPOP$q1,dataLAPOP$vic1ext)  ## tabla cruzada
+barplot(bartable, beside = TRUE,legend=legendPlot)  ## gráfico
 
 ```
 
@@ -491,14 +329,12 @@ Una gráfical alternativa:
 ```{r, eval=FALSE}
 library(ggplot2)                           
 
-#turn table into a data frame:
-governorDRTb=as.data.frame(table(governorDR$party,governorDR$election_year))
-names(governorDRTb)=c('party','election_year','f')
+#volver nuestra tabla en una dataframe: 
+subLAPOP=as.data.frame(table(dataLAPOP$q1,dataLAPOP$vic1ext))
+names(subLAPOP)=c("sexo","victimizacion", "f")
 
-
-
-#Plot the Data
-g <- ggplot(governorDRTb, aes(party, election_year)) + geom_point(aes(size = f), colour = "green") + theme_bw() + xlab("") + ylab("") +theme(legend.position="none")
+#Grafiquemos la data:
+g <- ggplot(subLAPOP, aes(sexo, victimizacion)) + geom_point(aes(size = f), colour = "green") + theme_bw() + xlab("") + ylab("") +theme(legend.position="none")
 g + scale_size_continuous(range=c(5,30)) + geom_text(aes(label = f))
 ```
 
@@ -511,30 +347,29 @@ ____
 
 ## <span style="color:blue">Categórico - Numérico</span>
 
+Lo usual es ver como se comporta una variable numérica ante diversos factores. Veamos si el IDH se diferencia entre provincias capitales y provincias que no son capitales. 
 
-Lo usual es ver como se comporta una variable numérica ante diversos factores.
 ```{r, eval=FALSE}
 # solo las contribuciones de negocios:
-business = governorDR[governorDR$code=='Business',]
-p <- ggplot(business, aes(party, amount))
-
+p <- ggplot(dataIDE, aes(capital, IDE))
 p + geom_boxplot()
 
 ```
 
 
 El boxplot da mucha información, para lo anterior podría calcular los intervalos de confianza para la media:
+
 ```{r, eval=FALSE}
 # Creo una funciónpara el error standard de la media (seMean):
 seMean = function(x) sd(x)/sqrt(length(x))
 
 # Media por grupo
-means=aggregate(list(mean=business$amount),
-          list(party=business$party),mean)
+means=aggregate(list(mean=dataIDE$IDE),
+          list(capital=dataIDE$capital),mean)
 
 # error standard por grupo: (usando mi función)
-sems=aggregate(list(seMean=business$amount),
-          list(party=business$party),seMean)
+sems=aggregate(list(seMean=dataIDE$IDE),
+          list(capital=dataIDE$capital),seMean)
 ```
 
 Aqui vemos que tenemos hasta ahora:
@@ -550,7 +385,7 @@ sems
 Juntemos lo anterior en un data frame:
 ```{r, eval=FALSE}
 #usando MERGE:
-data=merge(means,sems) # party es la 'key' para combinar
+data=merge(means,sems) # capital es la 'key' para combinar
 #tenemos:
 data
 ```
@@ -565,11 +400,10 @@ data$upper=data$mean+2*data$seMean
 data
 ```
 
-
 Con esto puedo graficarlos:
 ```{r, eval=FALSE}
 # this creates a plot of  the points (means):
-meanPlot = ggplot(data, aes(y=mean, x=party)) + geom_point()
+meanPlot = ggplot(data, aes(y=mean, x=capital)) + geom_point()
 
 # this adds the error bars:
 errorPlot = meanPlot + geom_errorbar(aes(ymin = lower, ymax = upper))
@@ -578,149 +412,81 @@ errorPlot = meanPlot + geom_errorbar(aes(ymin = lower, ymax = upper))
 errorPlot
 ```
 
-
-La gráfica sugiere que las contribuciones de los negocios no han sido muy diferentes hacia estos dos partidos. Si aplicasemos la prueba t-student, el p-value debería salir no significativo:
+La gráfica sugiere que el hay diferencia en el IDE entre las provincias que son capital y las que no. Si aplicamos la prueba t-student, el p-value debería salir  significativo:
 
 ```{r, eval=FALSE}
-t.test(business$amount~business$party,var.equal = T)
+t.test(dataIDE$IDE~dataIDE$capital,var.equal = T)
 ```
-...y así fue. Podemos concluir que ambos grupos se comportan de manera similar? 
+
+...y así fue. Podemos concluir que ambos grupos se comportan de manera diferente? 
 
 Veamos esta gráfica de densidades:
 ```{r, eval=FALSE}
-ggplot(business, aes(amount, colour = party)) +
+ggplot(dataIDE, aes(IDE, colour = capital)) +
   geom_density() 
 ```
 
-Dado que el comportamiento no sigue un patrón particular, indaguemos si ambas distribuciones son similares:
-```{r, eval=FALSE}
-wilcox.test(amount ~ party, data=business)
-```
-Esta prueba no-parametrica encuentra que ambas no son similares. 
+Veamos algo más complejo, diferencia en el IDE según clasificación de tamaño de la provincia.
 
-Veamos algo más complejo:
+Tratemos tamaño como una variable categórica:
 
 ```{r, eval=FALSE}
-with(governorDR, tapply(amount, list(code=code,party=party), mean) )
+dataIDE$tamano <- as.factor(dataIDE$tamano)
 ```
 
-Analicemos en general las contribuciones segun tipo de contribuyente:
 ```{r, eval=FALSE}
-m <- ggplot(governorDR, aes(x = amount))
-m + geom_histogram(bins=20) + facet_wrap(~code,scales = "free")
+with(dataIDE, tapply(IDE, tamano, mean) )
 ```
 
+Analicemos en general las contribuciones segun tamaño de la provincia
+```{r, eval=FALSE}
+m <- ggplot(dataIDE, aes(x = IDE))
+m + geom_histogram(bins=20) + facet_wrap(~tamano,scales = "free")
+```
 
 Serán las constribuciones diferentes? En este caso, usaremos una prueba F:
 ```{r, eval=FALSE}
-model = aov(amount ~ code, data = governorDR)
+model = aov(IDE ~ tamano, data = dataIDE)
 summary(model)
-
 ```
 
 La prueba detecta que _code_ produce diferencias. No nos dice cuáles son, por lo que debemos pedir una comparación _post hoc_ (Tukey):
+
 ```{r, eval=FALSE}
 TukeyHSD(model)
 ```
 
 El resultado es largo, pero podemos hacerlo sencillo:
 ```{r, eval=FALSE}
-result=as.data.frame(TukeyHSD(model)$code)
+result=as.data.frame(TukeyHSD(model)$tamano)
 result[4]<0.05
 ```
 
-La alternativa a la prueba F, es el test no-parametrico de Kruskal-Wallis:
-
-```{r, eval=FALSE}
-
-# notese 'as.factor(code)'
-kruskal.test(amount ~ as.factor(code), data = governorDR)
-```
-
-El resultado es el mismo.
-
-Un test post-hoc no-paramétrico:
-```{r, eval=FALSE}
-library(dunn.test)
-result=dunn.test(governorDR$amount,as.factor(governorDR$code),  method="bh",kw=F)  
-```
-
-Nuevamente, nos las ingeniamos para hacerlo más legible:
-
-```{r, eval=FALSE}
-data.frame(comparisons=result$comparisons,pval=result$P.adjusted<0.05)
-```
-
-
 [Inicio](#beginning)
-
-
 ____
 
 <a id='numnum'></a>
 
 ## <span style="color:blue">Numérico - Numérico</span>
 
-El programa [Medicare](https://en.wikipedia.org/wiki/Medicare_(United_States)) es un ejemplo de programa de apoyo social. Analicemos el uso de este programa en el estado de Washington. La data viene de [Medicare Beneficiary Enrollment and Demographics](https://dev.socrata.com/foundry/data.wa.gov/2cup-2fnu)
-
-
+Analicemos la data de IDE. Podemos hacer analisis _num-num_, más conocido como **correlacional**.Analicemos los indicadores que componen el IDE:
 
 ```{r, eval=FALSE}
-# los datos se recolectarán via API, pedimos data solo del 2014:
-library(jsonlite) 
-apiResponse="https://data.wa.gov/resource/2cup-2fnu.json?year=2014"
-medicare = fromJSON(apiResponse)
-head(medicare)
-```
-
-Notese que la primera fila es el total del estado, por lo que la eliminaremos:
-
-```{r, eval=FALSE}
-medicare2014=medicare[-1,]
-```
-
-Cuando se elimina una fila, es bueno resetear los indices de las filas:
-```{r, eval=FALSE}
-#resetting index after row deletion
-row.names(medicare2014)=NULL
-```
-
-Estas son las variables que se tienen:
-```{r, eval=FALSE}
-str(medicare2014)
-```
-
-Como se ve, los valores numericos están como _texto_(char),por lo que hay que formatear. En particular, la variable _county_  y la variables 'to_sort...' deben ser texto. Veamos cuales son las posiciones de éstas:
-```{r, eval=FALSE}
-names(medicare2014)
-```
-
-Formateamos como 'numeric' todo menos esas:
-```{r, eval=FALSE}
-medicare2014[,-c(4,16,17)]=lapply(medicare2014[,-c(4,16,17)],as.numeric)
-```
-
-Ahora si podemos hacer analisis _num-num_, más conocido como **correlacional**.Analicemos los valores porcentuales:
-```{r, eval=FALSE}
-res <- cor(medicare2014[,c(8:14)],use='complete.obs')
+res <- cor(dataIDE[,c(4:8)])
 round(res, 2)
 ```
-Evidentemente, la correlación entre porcentajes hombre/mujer se deben descartar.
 
 Veamos una gráfica:
 ```{r, eval=FALSE}
 library(car)
-scatterplotMatrix(medicare2014[,c(8:14)], 
+scatterplotMatrix(dataIDE[,c(4:8)], 
    main="Simple Scatterplot Matrix")
 ```
 
-
 De hecho, tenemos una versión no-paramétrica para Pearson:
 ```{r, eval=FALSE}
-cor(medicare2014[,c(8:14)],use='complete.obs',method='spearman')
+cor(dataIDE[,c(4:8)],method='spearman')
 ```
-
-
 
 [Inicio](#beginning)
 

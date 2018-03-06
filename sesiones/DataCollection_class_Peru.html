@@ -137,7 +137,7 @@ $(document).ready(function () {
 <hr />
 <p><a id="beginning"></a></p>
 <p>El primer paso para realizar cualquier tipo de análisis es tener los datos. Esto condiciona además el diseño de la investigación.</p>
-<p>Los datos pueden estar organizados por terceros. Si es así, debemos poder leer el formato en que estén preparados. A veces los necesitamos como están, a veces hay que darle reformatearlos.</p>
+<p>Los datos pueden estar organizados por terceros. Si es así, debemos poder leer el formato en que estén preparados. A veces los necesitamos como están, a veces hay que reformatearlos.</p>
 <p>Otras veces, uno mismo recogerá los datos. Si los datos representan alguna población en su totalidad no tendremos data sesgada; si no, habrá que hechar mano de algun proceso de muestreo. Veamos los siguientes casos:</p>
 <ol style="list-style-type: decimal">
 <li><a href="#part1">Leyendo SPSS</a></li>
@@ -153,7 +153,7 @@ getwd()</code></pre>
 <p>La ubicación de tu carpeta de trabajo debe estar en los parentesis.</p>
 <p>Windows y Mac no describen las rutas de los directorios de la misma manera, por lo que es mejor usar el comando <strong>file.path()</strong>:</p>
 <pre class="r"><code>folder=&quot;data&quot;
-fileName=&quot;anes_timeseries_2012.sav&quot;
+fileName=&quot;PeruLAPOP2014.sav&quot;
 fileToRead=file.path(folder,fileName)</code></pre>
 <p>En <em>fileToRead</em> estará la ruta correcta. Si hubiera una mayor secuencia de folders, <strong>file.path</strong> los concatenará sin problema.</p>
 <hr />
@@ -161,17 +161,24 @@ fileToRead=file.path(folder,fileName)</code></pre>
 </div>
 <div id="leyendo-spss" class="section level2">
 <h2>Leyendo SPSS</h2>
-<p>Abramos este archivo desde el <em>American National Election Studies Survey</em> (ANES):</p>
-<pre class="r"><code>#instalemos el paquete &quot;haven&quot; primero (se toma su tiempo!)
-library(haven)
+<p>Abramos este archivo del <em>Proyecto de Opinión Pública de América Latina</em> (LAPOP):</p>
+<pre class="r"><code>#instalemos el paquete &quot;foreign&quot; primero
+library(foreign)
 folder=&quot;data&quot;
-fileName=&quot;anes_timeseries_2012.sav&quot;
+fileName=&quot;PeruLAPOP2014.sav&quot;
 fileToRead=file.path(folder,fileName)
-dataSpss=read_sav(fileToRead)</code></pre>
-<p>En <strong>dataSpss</strong> está un gran archivo. Creemos una data frame (base de datos) con dos variables de interés: “libcpre_self”,“libcpo_self”. Dichas variables son resultado de un par de preguntas pre y post elecciones donde se solicita al encuestado ubicarse en algún punto de una escala de 1-7 puntos, cuyos valores extremos son “extremadamente liberal”&quot; y “extremadamente conservador”:</p>
-<pre class="r"><code>varsOfInterest=c(&quot;libcpre_self&quot;,&quot;libcpo_self&quot;)
-dataSpssSub=as.data.frame(dataSpss)[varsOfInterest]
+dataSpss=read.spss(fileToRead, to.data.frame=T) #ignoremos las advertencias </code></pre>
+<p>En <strong>dataSpss</strong> está un gran archivo (208 variables!). Creemos una data frame (base de datos) variables de interés.</p>
+<pre class="r"><code>variables=c(&quot;estratopri&quot;,&quot;b18&quot;, &quot;vic1ext&quot;, &quot;q1&quot;, &quot;q2&quot;)
+dataSpssSub=as.data.frame(dataSpss)[variables]
 head(dataSpssSub) #veamos las primeras filas de nuestra data </code></pre>
+<ul>
+<li>estratopri: Zona del país en la que habita el encuestado.</li>
+<li>b18: Confianza en la Policia Nacional. En una escala donde 1=Nada y 7=Mucho.</li>
+<li>vic1ext: Encuestado ha sido víctima de delincuencia en los últimos 12 meses (sí/no).</li>
+<li>q1: Sexo del encuestado.</li>
+<li>q2: Edad del encuestado.</li>
+</ul>
 <p><a href="#beginning">Go to page beginning</a></p>
 <hr />
 <p><a id="part2"></a></p>

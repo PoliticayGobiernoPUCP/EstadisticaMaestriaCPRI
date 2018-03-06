@@ -11,7 +11,7 @@ ____
 
 El primer paso para realizar cualquier tipo de análisis es tener los datos. Esto condiciona además el diseño de la investigación.
 
-Los datos pueden estar organizados por terceros. Si es así, debemos poder leer el formato en que estén preparados. A veces los necesitamos como están, a veces hay que darle reformatearlos.
+Los datos pueden estar organizados por terceros. Si es así, debemos poder leer el formato en que estén preparados. A veces los necesitamos como están, a veces hay que reformatearlos.
 
 Otras veces, uno mismo recogerá los datos. Si los datos representan alguna población en su totalidad no tendremos data sesgada; si no, habrá que hechar mano de algun proceso de muestreo. Veamos los siguientes casos:
 
@@ -36,7 +36,7 @@ La ubicación de tu carpeta de trabajo debe estar en los parentesis.
 Windows y Mac no describen las rutas de los directorios de la misma manera, por lo que es mejor usar el comando **file.path()**:
 ```{r, eval=FALSE}
 folder="data"
-fileName="anes_timeseries_2012.sav"
+fileName="PeruLAPOP2014.sav"
 fileToRead=file.path(folder,fileName)
 ```
 
@@ -48,24 +48,29 @@ ____
 
 ## Leyendo SPSS
 
-Abramos este archivo desde el _American National Election Studies Survey_ (ANES):
+Abramos este archivo del  _Proyecto de Opinión Pública de América Latina_ (LAPOP):
 ```{r, eval=FALSE}
-#instalemos el paquete "haven" primero (se toma su tiempo!)
-library(haven)
+#instalemos el paquete "foreign" primero
+library(foreign)
 folder="data"
-fileName="anes_timeseries_2012.sav"
+fileName="PeruLAPOP2014.sav"
 fileToRead=file.path(folder,fileName)
-dataSpss=read_sav(fileToRead)
+dataSpss=read.spss(fileToRead, to.data.frame=T) #ignoremos las advertencias 
 ```
 
-En **dataSpss** está un gran archivo. Creemos una data frame (base de datos) con dos variables de interés: "libcpre_self","libcpo_self". Dichas variables son resultado de un par de preguntas pre y post elecciones donde se solicita al encuestado ubicarse en algún punto de una escala de 1-7 puntos, cuyos valores extremos son "extremadamente liberal"" y "extremadamente conservador": 
+En **dataSpss** está un gran archivo (208 variables!). Creemos una data frame (base de datos) variables de interés.
 
 ```{r, eval=FALSE}
-varsOfInterest=c("libcpre_self","libcpo_self")
-dataSpssSub=as.data.frame(dataSpss)[varsOfInterest]
+variables=c("estratopri","b18", "vic1ext", "q1", "q2")
+dataSpssSub=as.data.frame(dataSpss)[variables]
 head(dataSpssSub) #veamos las primeras filas de nuestra data 
 ```
 
+- estratopri: Zona del país en la que habita el encuestado. 
+- b18: Confianza en la Policia Nacional. En una escala donde 1=Nada y 7=Mucho. 
+- vic1ext: Encuestado ha sido víctima de delincuencia en los últimos 12 meses (sí/no). 
+- q1: Sexo del encuestado. 
+- q2: Edad del encuestado. 
 
 [Go to page beginning](#beginning)
 
