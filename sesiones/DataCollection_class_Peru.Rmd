@@ -13,30 +13,32 @@ El primer paso para realizar cualquier tipo de análisis es tener los datos. Est
 
 Los datos pueden estar organizados por terceros. Si es así, debemos poder leer el formato en que estén preparados. A veces los necesitamos como están, a veces hay que reformatearlos.
 
-Otras veces, uno mismo recogerá los datos. Si los datos representan alguna población en su totalidad no tendremos data sesgada; si no, habrá que hechar mano de algun proceso de muestreo. Veamos los siguientes casos:
+Otras veces, uno mismo recogerá los datos. Si los datos representan alguna población en su totalidad no tendremos data sesgada; si no, habrá que hechar mano de algún proceso de muestreo. 
+
+Veamos los siguientes casos:
 
 1. [Leyendo SPSS](#part1) 
-2. [Leyendo XLSX](#part2) 
-3. [Leyenco CSV](#part3) 
+2. [Leyenco CSV](#part2) 
+3. [Leyendo XLSX](#part3) 
 4. [Leyendo datos espaciales](#part4) 
 
-Tener en claro la ubicación de los archivos es muy importante. Crear una carpeta para los datos nuestra maquina es la alternativa clásica, pero si es posible usar el link hacia algun repositorio puede ser más eficiente. Si los archivos estarán en la máquina, los siguientes comandos de R son de utilidad:
+Tener en claro la ubicación de los archivos es muy importante. Crear una carpeta para los datos en nuestra maquina es la alternativa clásica, pero si es posible usar el link hacia algún repositorio puede ser más eficiente. Si los archivos están en nuestra máquina, los siguientes comandos de R son de utilidad:
 
 ```{r, eval=FALSE}
-# # con qué carpeta estoy trabajando?
+#con qué carpeta estamos trabajando?
 getwd()
 ```
 
-Acabas de ver donde estás, si quieres cambiar debes utilizar:
+Acabamos de ver dónde estamos, si queremos cambiar esto podemos utilizar:
 ```{r, eval=FALSE}
 setwd()
 ```
-La ubicación de tu carpeta de trabajo debe estar en los parentesis.
+La ubicación de nuestra carpeta de trabajo debe estar entre los paréntesis.
 
 Windows y Mac no describen las rutas de los directorios de la misma manera, por lo que es mejor usar el comando **file.path()**:
 ```{r, eval=FALSE}
 folder="data"
-fileName="PeruLAPOP2014.sav"
+fileName="idePeru2012.sav"
 fileToRead=file.path(folder,fileName)
 ```
 
@@ -48,29 +50,16 @@ ____
 
 ## Leyendo SPSS
 
-Abramos este archivo del  _Proyecto de Opinión Pública de América Latina_ (LAPOP):
+Carguemos el archivo _idePeru2012.sav_. Este archivo contiene información del Índice de Densidad Estatal (IDE), elaborado por PNUD, para Perú en el año 2012. La información se encuentra a nivel de provincias. 
 ```{r, eval=FALSE}
-#instalemos el paquete "foreign" primero
-library(foreign)
+#debemos instalar el paquete "foreign" primero! 
+library(foreign) #carguemos el paquete 
 folder="data"
-fileName="PeruLAPOP2014.sav"
+fileName="idePeru2012.sav"
 fileToRead=file.path(folder,fileName)
-dataSpss=read.spss(fileToRead, to.data.frame=T) #ignoremos las advertencias 
+dataSpss=read.spss(fileToRead, use.value.labels = T, to.data.frame = T)
+head(dataSpss) #veamos las primeras filas
 ```
-
-En **dataSpss** está un gran archivo (208 variables!). Creemos una data frame (base de datos) variables de interés.
-
-```{r, eval=FALSE}
-variables=c("estratopri","b18", "vic1ext", "q1", "q2")
-dataSpssSub=as.data.frame(dataSpss)[variables]
-head(dataSpssSub) #veamos las primeras filas de nuestra data 
-```
-
-- estratopri: Zona del país en la que habita el encuestado. 
-- b18: Confianza en la Policia Nacional. En una escala donde 1=Nada y 7=Mucho. 
-- vic1ext: Encuestado ha sido víctima de delincuencia en los últimos 12 meses (sí/no). 
-- q1: Sexo del encuestado. 
-- q2: Edad del encuestado. 
 
 [Go to page beginning](#beginning)
 
@@ -78,27 +67,17 @@ ____
 
 <a id='part2'></a>
 
-## Leyendo XLSX
+## Leyendo CSV
 
-Otro formato propietario de mucho uso es el de las hojas de cálculo en Excel. A continuación cargaremos la data del Índice de Desarrollo Humano, elaborado por PNUD, para Perú en el año 2012. La información se encuentra a nivel de provincias. 
-
+Podemos abrir la misma data (IDE 2012) en formato CSV:
 ```{r, eval=FALSE}
-#instalemos el paquete "readxl" primero
-library(readxl)
-fileName='idhPeru.xlsx'
+library(foreign) #volvemos a utilizar foreign, no es necesario volver a instalar el paquete
+folder="data"
+fileName="idePeru2012.csv"
 fileToRead=file.path(folder,fileName)
-dataExcel=read_excel(fileToRead)
-head(dataExcel) #Veamos las primeras filas
+dataCsv=read.csv(fileToRead)
+head(dataCsv) #veamos las primeras filas
 ```
-
-- Ubigeo: Identificación de las provincias.
-- PROVINCIA: Nombre de cada provincia.
-- habitantes: número de habitantes.
-- IDH: Índice de Desarrollo Humano. 
-- esperanza: Esperanza de vida al nacer (años).
-- secundaria: Porcentaje de población con educación secundaria completa. 
-- educa: Años de educación promedio de la población de 25 años a más. 
-- percapitaf: Ingreso familiar per cápita. 
 
 [Go to page beginning](#beginning)
 
@@ -106,57 +85,41 @@ ____
 
 <a id='part3'></a>
 
-## Leyendo CSV
+## Leyendo XLSX
 
-Otro formato propietario de mucho uso es el de valores separados por comas (CSV). Cargaremos la data del Índice de Densidad Estatal, elaborado por PNUD, para Perú en el año 2012. La información se encuentra a nivel de provincias. 
-
+Otro formato de mucho uso es el de las hojas de cálculo en Excel. A continuación cargaremos la data del Índice de Desarrollo Humano (IDH), elaborado por PNUD, para Perú en el año 2012. La información se encuentra a nivel de provincias. 
 ```{r, eval=FALSE}
-library(foreign)
-folder="data"
-fileName="idePeru2012.csv"
+#instalemos el paquete "readxl" primero
+library(readxl) #carguemos el paquete 
+fileName='idhPeru.xlsx'
 fileToRead=file.path(folder,fileName)
-dataCsv=read.csv(fileToRead)
-head(dataCsv) #Veamos las primeras filas
+dataExcel=read_excel(fileToRead)
+head(dataExcel) #veamos las primeras filas
 ```
-
-- Ubigeo: Identificación de las provincias.
-- PROVINCIA: Nombre de cada provincia.
-- IDE: Índice de Densidad Estatal. 
-- identidad: Porcentaje de población con acta de nacimiento o DNI.
-- salud: Número de médicos por cada 10,000 habitantes.
-- educacion: Tasa de asistencia a secundaria (pob. de 12 a 16 años).
-- saneamiento: Porcentaje de viviendas con agua y desague. 
-- electrificacion: Porcentaje de viviendas elecrificadas. 
-- poblacion: Número de habitantes.
-- costa: Provincia ubicada en la costa (SI/NO).
-- capital: Provincia capital de la región (SI/NO).
-- tamano: Clasificación de provincias según tamaño (1-5). 
 
 [Go to page beginning](#beginning)
 
 ____
 
-----
-
 <a id='part4'></a>
 
 ## Recolectando Datos espaciales
 
-Los datos especiales presentan una complejidad diferente. Este tipo de datos, además de la información de la unidad de estudio, guardan información que permite visualizar lineas, puntos y poligonos.
+Los datos especiales presentan una complejidad diferente. Este tipo de datos, además de la información de la unidad de estudio, guardan información que permite visualizar lineas, puntos y polígonos.
 
 El formato RDS de R puede almacenar este tipo de información. Por ejemplo, si visitas la pagina web del [GADM database of Global Administrative Areas](http://www.gadm.org/country) puedes descargar mapas por país a diversos niveles subnacionales. Si visitas el link y buscas Perú puedes hacer:
 
 ```{r, eval=FALSE}
-library(sp) 
+library(sp)  #instalemos el paquete primero!
 PeruRegs <- readRDS(gzcon(url("http://biogeo.ucdavis.edu/data/gadm2.8/rds/PER_adm1.rds"))) # la información está a nivel de regiones! 
 ```
 
-PeruRegs ya tiene la información. Si solo quieres ver los datos de cada unidad debes hacer:
+PeruRegs ya tiene la información. Si solo quieres ver los datos:
 
 ```{r, eval=FALSE}
 PeruRegs@data #vemos la data
 ```
-Aqui grafico:
+Aqui gráfico:
 ```{r, eval=FALSE}
 plot(PeruRegs) #veamos el mapa 
 ```
@@ -169,8 +132,8 @@ folderMap="provinciasPeru"
 fileName="provinciasPeru.shp"  #la información en este caso está a nivel de provincias
 fileToRead=file.path(folder,folderMap,fileName)
 
-library(maptools)
-library(rgeos)
+library(maptools) #instalemos el paquete primero!
+library(rgeos) #instalemos el paquete primero!
 PeruRegs_shp=readShapePoly(fileToRead)
 ```
 
@@ -183,5 +146,3 @@ plot(PeruRegs_shp) #veamos el mapa
 [Go to page beginning](#beginning)
 
 ____
-
-####[VOLVER AL SILABO](https://politicaygobiernopucp.github.io/EstadisticaPoliticaGobiernoII/)
