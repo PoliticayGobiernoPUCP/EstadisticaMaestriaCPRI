@@ -1,3 +1,8 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
 <br> 
 <center><img src="http://i.imgur.com/tveTlt8.png" width="300"></center>
 
@@ -42,7 +47,7 @@ fileName="idePeru2012.sav"
 fileToRead=file.path(folder,fileName)
 ```
 
-En _fileToRead_ estará la ruta correcta. Si hubiera una mayor secuencia de folders, **file.path** los concatenará sin problema.
+En _fileToRead_ estará la ruta correcta para encontrar nuestros archivos y cargar la data que necesitamos. 
 
 ____
 
@@ -71,7 +76,7 @@ ____
 
 Podemos abrir la misma data (IDE 2012) en formato CSV:
 ```{r, eval=FALSE}
-library(foreign) #volvemos a utilizar foreign, no es necesario volver a instalar el paquete
+library(foreign) #utilizamos foreign, no es necesario volver a instalar el paquete
 folder="data"
 fileName="idePeru2012.csv"
 fileToRead=file.path(folder,fileName)
@@ -91,7 +96,8 @@ Otro formato de mucho uso es el de las hojas de cálculo en Excel. A continuaci�
 ```{r, eval=FALSE}
 #instalemos el paquete "readxl" primero
 library(readxl) #carguemos el paquete 
-fileName='idhPeru.xlsx'
+folder="data"
+fileName="idhPeru.xlsx"
 fileToRead=file.path(folder,fileName)
 dataExcel=read_excel(fileToRead)
 head(dataExcel) #veamos las primeras filas
@@ -107,30 +113,29 @@ ____
 
 Los datos especiales presentan una complejidad diferente. Este tipo de datos, además de la información de la unidad de estudio, guardan información que permite visualizar lineas, puntos y polígonos.
 
-El formato RDS de R puede almacenar este tipo de información. Por ejemplo, si visitas la pagina web del [GADM database of Global Administrative Areas](http://www.gadm.org/country) puedes descargar mapas por país a diversos niveles subnacionales. Si visitas el link y buscas Perú puedes hacer:
+El formato RDS de R puede almacenar este tipo de información. Por ejemplo, si visitamos la pagina web del [GADM database of Global Administrative Areas](http://www.gadm.org/country) podemos descargar mapas por país a diversos niveles subnacionales. Si buscamos la data para Perú podemos:
 
 ```{r, eval=FALSE}
 library(sp)  #instalemos el paquete primero!
 PeruRegs <- readRDS(gzcon(url("http://biogeo.ucdavis.edu/data/gadm2.8/rds/PER_adm1.rds"))) # la información está a nivel de regiones! 
 ```
 
-PeruRegs ya tiene la información. Si solo quieres ver los datos:
+PeruRegs ya tiene la información. Si solo queremos ver los datos:
 
 ```{r, eval=FALSE}
 PeruRegs@data #vemos la data
 ```
+
 Aqui gráfico:
 ```{r, eval=FALSE}
 plot(PeruRegs) #veamos el mapa 
 ```
 
 Un formato más común son los mapas en SHAPEFILE. Hay un directorio dentro del folder _data_ donde estan varios mapas de limites administrativos del Perú:
-
 ```{r, eval=FALSE}
 folder="data"
-folderMap="provinciasPeru"
 fileName="provinciasPeru.shp"  #la información en este caso está a nivel de provincias
-fileToRead=file.path(folder,folderMap,fileName)
+fileToRead=file.path(folder,fileName)
 
 library(maptools) #instalemos el paquete primero!
 library(rgeos) #instalemos el paquete primero!

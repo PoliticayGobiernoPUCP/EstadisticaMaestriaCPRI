@@ -132,97 +132,149 @@ $(document).ready(function () {
 <hr />
 </div>
 </div>
-<div id="leyendo-data-desde-r" class="section level2">
-<h2><strong>Leyendo Data desde R</strong></h2>
+<div id="analisis-exploratorio-de-datos" class="section level2">
+<h2><strong>Análisis exploratorio de datos</strong></h2>
 <hr />
 <p><a id="beginning"></a></p>
-<p>El primer paso para realizar cualquier tipo de análisis es tener los datos. Esto condiciona además el diseño de la investigación.</p>
-<p>Los datos pueden estar organizados por terceros. Si es así, debemos poder leer el formato en que estén preparados. A veces los necesitamos como están, a veces hay que reformatearlos.</p>
-<p>Otras veces, uno mismo recogerá los datos. Si los datos representan alguna población en su totalidad no tendremos data sesgada; si no, habrá que hechar mano de algún proceso de muestreo.</p>
-<p>Veamos los siguientes casos:</p>
+<p>La exploración de datos tiene en cuenta:</p>
+<ul>
+<li>El tipo de escala en que estén los datos (nominales, ordinales, numéricas…) y las combinaciones entre estas.</li>
+<li>La detección del comportamiento de los datos y su afinidad (o no) con algun modelo teórico.</li>
+</ul>
+<p>Los contenidos para esta sesión se organizan asi:</p>
 <ol style="list-style-type: decimal">
-<li><a href="#part1">Leyendo SPSS</a></li>
-<li><a href="#part2">Leyenco CSV</a></li>
-<li><a href="#part3">Leyendo XLSX</a></li>
-<li><a href="#part4">Leyendo datos espaciales</a></li>
+<li><a href="#carga">Carga de datos</a></li>
+<li><a href="#Dico">Exploración de variables nominales</a></li>
+<li><a href="#Ord">Exploración de variables ordinales</a></li>
+<li><a href="#Num">Exploración de variables numéricas</a></li>
+<li><a href="#Num-cat">Relación numérica - categórica</a></li>
+<li><a href="#Num-num">Relación numérica - numérica</a></li>
 </ol>
-<p>Tener en claro la ubicación de los archivos es muy importante. Crear una carpeta para los datos en nuestra maquina es la alternativa clásica, pero si es posible usar el link hacia algún repositorio puede ser más eficiente. Si los archivos están en nuestra máquina, los siguientes comandos de R son de utilidad:</p>
-<pre class="r"><code>#con qué carpeta estamos trabajando?
-getwd()</code></pre>
-<p>Acabamos de ver dónde estamos, si queremos cambiar esto podemos utilizar:</p>
-<pre class="r"><code>setwd()</code></pre>
-<p>La ubicación de nuestra carpeta de trabajo debe estar entre los paréntesis.</p>
-<p>Windows y Mac no describen las rutas de los directorios de la misma manera, por lo que es mejor usar el comando <strong>file.path()</strong>:</p>
+<hr />
+<p><a id="carga"></a></p>
+</div>
+<div id="carga-de-datos" class="section level2">
+<h2><span style="color:blue"> Carga de datos</span></h2>
+<p>Carguemos la data de <em>IDEPerú2012.xlsx</em>. Esta data contiene información del Índice de Densidad Estatal (IDE), elaborado por PNUD, para Perú en el año 2012. La información se encuentra a nivel de provincias.</p>
+<p>Debemos tener en cuenta cuál es nuestra carpeta de trabajo (directorio). Windows y Mac no describen las rutas de los directorios de la misma manera, por lo que es mejor usar el comando <strong>file.path()</strong>:</p>
 <pre class="r"><code>folder=&quot;data&quot;
-fileName=&quot;idePeru2012.sav&quot;
+fileName=&quot;idePeru2012.xlsx&quot;
 fileToRead=file.path(folder,fileName)</code></pre>
-<p>En <em>fileToRead</em> estará la ruta correcta. Si hubiera una mayor secuencia de folders, <strong>file.path</strong> los concatenará sin problema.</p>
-<hr />
-<p><a id="part1"></a></p>
-</div>
-<div id="leyendo-spss" class="section level2">
-<h2>Leyendo SPSS</h2>
-<p>Carguemos el archivo <em>idePeru2012.sav</em>. Este archivo contiene información del Índice de Densidad Estatal (IDE), elaborado por PNUD, para Perú en el año 2012. La información se encuentra a nivel de provincias.</p>
-<pre class="r"><code>#debemos instalar el paquete &quot;foreign&quot; primero! 
-library(foreign) #carguemos el paquete 
+<p>En <em>fileToRead</em> estará la ruta correcta para encontrar nuestro archivo y cargar la data que necesitamos.</p>
+<p>Para cargar data en formato XLSX usamos el paquete readxl:</p>
+<pre class="r"><code>library(readxl) #instalemos el paquete antes de cargarlo! 
+
+folder=&quot;data&quot;
+fileName=&quot;idePeru2012.xlsx&quot;
+fileToRead=file.path(folder,fileName)
+
+ideExcel=read_excel(fileToRead) #carguemos nuestra data! 
+head(ideExcel) #veamos las primeras filas</code></pre>
+<p>Podemos cargar la misma data en formato SAV (para archivos de SPSS). Para ello, usamos el paquete foreign:</p>
+<pre class="r"><code>library(foreign) #instalemos el paquete antes de cargarlo! 
+
 folder=&quot;data&quot;
 fileName=&quot;idePeru2012.sav&quot;
 fileToRead=file.path(folder,fileName)
-dataSpss=read.spss(fileToRead, use.value.labels = T, to.data.frame = T)
-head(dataSpss) #veamos las primeras filas</code></pre>
-<p><a href="#beginning">Go to page beginning</a></p>
-<hr />
-<p><a id="part2"></a></p>
-</div>
-<div id="leyendo-csv" class="section level2">
-<h2>Leyendo CSV</h2>
-<p>Podemos abrir la misma data (IDE 2012) en formato CSV:</p>
-<pre class="r"><code>library(foreign) #volvemos a utilizar foreign, no es necesario volver a instalar el paquete
-folder=&quot;data&quot;
-fileName=&quot;idePeru2012.csv&quot;
-fileToRead=file.path(folder,fileName)
-dataCsv=read.csv(fileToRead)
-head(dataCsv) #veamos las primeras filas</code></pre>
-<p><a href="#beginning">Go to page beginning</a></p>
-<hr />
-<p><a id="part3"></a></p>
-</div>
-<div id="leyendo-xlsx" class="section level2">
-<h2>Leyendo XLSX</h2>
-<p>Otro formato de mucho uso es el de las hojas de cálculo en Excel. A continuación cargaremos la data del Índice de Desarrollo Humano (IDH), elaborado por PNUD, para Perú en el año 2012. La información se encuentra a nivel de provincias.</p>
-<pre class="r"><code>#instalemos el paquete &quot;readxl&quot; primero
-library(readxl) #carguemos el paquete 
-fileName='idhPeru.xlsx'
-fileToRead=file.path(folder,fileName)
-dataExcel=read_excel(fileToRead)
-head(dataExcel) #veamos las primeras filas</code></pre>
-<p><a href="#beginning">Go to page beginning</a></p>
-<hr />
-<p><a id="part4"></a></p>
-</div>
-<div id="recolectando-datos-espaciales" class="section level2">
-<h2>Recolectando Datos espaciales</h2>
-<p>Los datos especiales presentan una complejidad diferente. Este tipo de datos, además de la información de la unidad de estudio, guardan información que permite visualizar lineas, puntos y polígonos.</p>
-<p>El formato RDS de R puede almacenar este tipo de información. Por ejemplo, si visitas la pagina web del <a href="http://www.gadm.org/country">GADM database of Global Administrative Areas</a> puedes descargar mapas por país a diversos niveles subnacionales. Si visitas el link y buscas Perú puedes hacer:</p>
-<pre class="r"><code>library(sp)  #instalemos el paquete primero!
-PeruRegs &lt;- readRDS(gzcon(url(&quot;http://biogeo.ucdavis.edu/data/gadm2.8/rds/PER_adm1.rds&quot;))) # la información está a nivel de regiones! </code></pre>
-<p>PeruRegs ya tiene la información. Si solo quieres ver los datos:</p>
-<pre class="r"><code>PeruRegs@data #vemos la data</code></pre>
-<p>Aqui gráfico:</p>
-<pre class="r"><code>plot(PeruRegs) #veamos el mapa </code></pre>
-<p>Un formato más común son los mapas en SHAPEFILE. Hay un directorio dentro del folder <em>data</em> donde estan varios mapas de limites administrativos del Perú:</p>
-<pre class="r"><code>folder=&quot;data&quot;
-folderMap=&quot;provinciasPeru&quot;
-fileName=&quot;provinciasPeru.shp&quot;  #la información en este caso está a nivel de provincias
-fileToRead=file.path(folder,folderMap,fileName)
 
-library(maptools) #instalemos el paquete primero!
-library(rgeos) #instalemos el paquete primero!
-PeruRegs_shp=readShapePoly(fileToRead)</code></pre>
-<p><em>PeruRegs_shp</em> tiene el mapa. Salió un <em>warning</em> pero lo podemos obviar. El gráfico funciona (demora un poco):</p>
-<pre class="r"><code>plot(PeruRegs_shp) #veamos el mapa </code></pre>
-<p><a href="#beginning">Go to page beginning</a></p>
-<hr />
+ideSpss=read.spss(fileToRead, use.value.labels = T, to.data.frame = T)
+head(ideSpss) #veamos las primeras filas</code></pre>
+<p>Veamos los nombres de las variables en nuestra base de datos:</p>
+<pre class="r"><code>names(ideSpss)</code></pre>
+<p><a href="#beginning">Inicio</a></p>
+<p><a id="Dico"></a></p>
+</div>
+<div id="exploracion-de-variables-nominales" class="section level2">
+<h2><span style="color:blue"> Exploración de variables nominales </span></h2>
+<p>Exploremos la variable <em>costa</em>. Esta variable identifica si la provincia se encuentra ubicada en la costa (SI/NO).</p>
+<p>Veamos la distribución de la variable:</p>
+<pre class="r"><code>table(ideSpss$costa)</code></pre>
+<p>De manera gráfica:</p>
+<pre class="r"><code>toPlot=table(ideSpss$costa) #distribución 
+barplot(toPlot,col=&quot;lightblue&quot;, #color dle grafico
+        xlab=&quot;Ingresos&quot;,  #título eje x 
+        ylab=&quot;Conteo de distritos&quot;, #título eje y
+        main=&quot;Distribución de provincias en la Costa&quot;) #título del gráfico</code></pre>
+<p>Podemos ver la distrubución en porcentajes:</p>
+<pre class="r"><code>prop.table(table(ideSpss$costa))*100</code></pre>
+<p><em>Pregunta:</em> ¿Cómo sería el gráfico en porcentajes?</p>
+<p>Veamos la moda:</p>
+<pre class="r"><code>library(DescTools) #instalemos el paquete! 
+Mode(ideSpss$costa)</code></pre>
+<p><a href="#beginning">Inicio</a></p>
+<p><a id="Ord"></a></p>
+</div>
+<div id="exploracion-de-variables-ordinales" class="section level2">
+<h2><span style="color:blue"> Exploración de variables ordinales </span></h2>
+<p>Exploremos la variable <em>tamano</em>. Esta variable identifica el tamaño de la provincia de acuerdo a su población. La variable tiene 5 categorías, donde “1=pequeña” y “5=grande”.</p>
+<p>Veamos la distribución de nuestra variable:</p>
+<pre class="r"><code>table(ideSpss$tamano)</code></pre>
+<p>En porcentaje:</p>
+<pre class="r"><code>prop.table(table(ideSpss$tamano))*100</code></pre>
+<p>Hay que darle formato <em>ordinal</em> a la variable:</p>
+<pre class="r"><code>ideSpss$tamano=factor(ideSpss$tamano,
+                            levels = c(&quot;1=Pequena&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5=Grande&quot;),
+                            ordered=T)
+levels(ideSpss$tamano)</code></pre>
+<p>Podemos calcular la mediana en ordinales:</p>
+<pre class="r"><code>Median(ideSpss$tamano)</code></pre>
+<p>La moda es:</p>
+<pre class="r"><code>Mode(ideSpss$tamano)</code></pre>
+<p>Veamos un gráfico de barras (lo hacemos usando el porcentaje):</p>
+<pre class="r"><code>toPlot=prop.table(table(ideSpss$tamano))*100
+barplot(toPlot,col=&quot;purple&quot;,
+        xlab=&quot;Tamaño&quot;, 
+        ylab=&quot;Porcentaje de distritos&quot;,
+        main=&quot;Distribución de provincias según tamaño&quot;)</code></pre>
+<p><a href="#beginning">Inicio</a></p>
+<p><a id="Num"></a></p>
+</div>
+<div id="exploracion-de-variables-numericas" class="section level2">
+<h2><span style="color:blue"> Exploración de variables numéricas </span></h2>
+<p>Exploremos la variable IDE. El Índice de Densidad Estatal mide la presencia del Estado en el territorio. Se encuentra en una estala de 0 a 1.</p>
+<p>Veamos la distribución de la variable gráficamente:</p>
+<pre class="r"><code>hist(ideSpss$IDE)</code></pre>
+<p>Veamos un boxplot. Usemos el paquete ggplot2. ggplot2 nos permite hacer gráficos muy sofisticados:</p>
+<pre class="r"><code>library(ggplot2)
+Plot=ggplot(ideSpss,aes(y=IDE,x=1)) + geom_boxplot() + coord_flip()
+Plot #vemos el gráfico</code></pre>
+<p>Hay que personalizar el gráfico:</p>
+<pre class="r"><code>#Agregamos título y modificamos las etiquetas de los ejes 
+Plot + labs(title=&quot;Indice de Densidad Estatal 2012&quot;, y=NULL, x=NULL) + 
+        scale_x_continuous(labels= NULL, breaks = NULL)</code></pre>
+<p>¿Tenemos valores extremos (outliers)?</p>
+<p>Veamos estadísticos descriptivos básicos con la función <em>summary</em>:</p>
+<pre class="r"><code>summary(ideSpss$IDE)</code></pre>
+<p><a href="#beginning">Inicio</a></p>
+<p><a id="Num-cat"></a></p>
+</div>
+<div id="relacion-numerica---categorica" class="section level2">
+<h2><span style="color:blue"> Relación numérica - categórica </span></h2>
+<p>Lo usual es ver como se comporta una variable numérica ante diversos factores. Veamos como se distribuye IDE diferenciando por la ubicación de las provincias.</p>
+<pre class="r"><code>Plot=ggplot(ideSpss,aes(y=IDE,x=costa)) + geom_boxplot() + labs(title=&quot;Indice de Densidad Estatal 2012&quot;, y= &quot;IDE&quot;, x=&quot;Provincia en la costa (NO/SI)&quot;)
+Plot</code></pre>
+<p>Veamos la media por grupos:</p>
+<pre class="r"><code>aggregate(IDE ~ costa,data=ideSpss,FUN=mean)</code></pre>
+<p>Podemos ver si esa diferencia en las medias es estadísticamente significativa utilizando una prueba de medias:</p>
+<pre class="r"><code>t.test(ideSpss$IDE~ideSpss$costa,var.equal = T)</code></pre>
+<p>Como esperabamos, la diferencia es estadísticamente significativa! (el p-value es menor a 0.05). Esta es una prueba paramétrica.</p>
+<p><em>Ejercicio</em>: ¿Cómo es la relación entre IDE y capital?</p>
+<p><a href="#beginning">Inicio</a></p>
+<p><a id="Num-num"></a></p>
+</div>
+<div id="relacion-numerica---numerica" class="section level2">
+<h2><span style="color:blue"> Relación numérica - numérica </span></h2>
+<p>Podemos explorar el nivel de IDE y la población de la provincia.</p>
+<p>Ya hemos explorado la variable IDE, veamos ahora los estadísticos descriptivos de la variable <em>población.</em></p>
+<pre class="r"><code>summary(ideSpss$poblacion)</code></pre>
+<p>Ahora veamos gráficamente la relación entre ambas variables, para ello utilizamos un scatterplot:</p>
+<pre class="r"><code>plot(ideSpss$IDE, ideSpss$poblacion, main=&quot;Relación IDE y población&quot;)</code></pre>
+<p>Vemos que tenemos un valor atípico! (es Lima).</p>
+<p>Ahora hagamos un analisis <em>num-num</em>, más conocido como <strong>correlacional</strong>, ello nos va a permitir saber si la relación es estadísticamente significativa, la dirección de la relación y su magnitud!</p>
+<pre class="r"><code>cor.test(ideSpss$IDE, ideSpss$poblacion)</code></pre>
+<p>Vemos que la relación es estadísticamente significativa (p-value menor a 0.05), la relación es directa y que la relación entre ambas variables no es muy fuerte.</p>
+<p>Tengamos en mente que Pearson es una prueba paramétrica!</p>
+<p><em>Ejercicio:</em> Exploren la relación entre otras variables de la base de datos.</p>
 </div>
 
 

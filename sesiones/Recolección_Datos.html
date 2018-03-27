@@ -132,284 +132,97 @@ $(document).ready(function () {
 <hr />
 </div>
 </div>
-<div id="exploracion-de-datos" class="section level2">
-<h2><strong>Exploración de Datos</strong></h2>
+<div id="leyendo-data-desde-r" class="section level2">
+<h2><strong>Leyendo Data desde R</strong></h2>
 <hr />
 <p><a id="beginning"></a></p>
-<p>La exploración de datos tiene en cuenta:</p>
-<ul>
-<li>El tipo de escala en que estén los datos (dicotómica, politómica, etc.); y las combinaciones entre estas.</li>
-<li>La detección del comportamiento de los datos y su afinidad (o no) con algun modelo teórico.</li>
-</ul>
-<p>Los contenidos para esta sesión se organizan asi:</p>
+<p>El primer paso para realizar cualquier tipo de análisis es tener los datos. Esto condiciona además el diseño de la investigación.</p>
+<p>Los datos pueden estar organizados por terceros. Si es así, debemos poder leer el formato en que estén preparados. A veces los necesitamos como están, a veces hay que reformatearlos.</p>
+<p>Otras veces, uno mismo recogerá los datos. Si los datos representan alguna población en su totalidad no tendremos data sesgada; si no, habrá que hechar mano de algún proceso de muestreo.</p>
+<p>Veamos los siguientes casos:</p>
 <ol style="list-style-type: decimal">
-<li><strong>AED Univariado</strong></li>
+<li><a href="#part1">Leyendo SPSS</a></li>
+<li><a href="#part2">Leyenco CSV</a></li>
+<li><a href="#part3">Leyendo XLSX</a></li>
+<li><a href="#part4">Leyendo datos espaciales</a></li>
 </ol>
-<ul>
-<li><p>Categóricos</p>
-<ul>
-<li><a href="#Dichotomous">Dicotómicos</a></li>
-<li>Politomicos
-<ul>
-<li><a href="#Nordinal">No-Ordinal</a></li>
-<li><a href="#Ordinal">Ordinal</a></li>
-</ul></li>
-</ul></li>
-<li>Numéricos
-<ul>
-<li><a href="#Counts">Conteos</a></li>
-<li><a href="#Measurements">Mediciones</a> (ratio o intervalo)</li>
-</ul></li>
-</ul>
-<ol start="2" style="list-style-type: decimal">
-<li><strong>AED Bivariado</strong></li>
-</ol>
-<ul>
-<li><a href="#catcat">Categorico - Categorico</a></li>
-<li><a href="#catnum">Categorico - Numérico</a></li>
-<li><a href="#numnum">Numérico - Numérico</a></li>
-</ul>
-<p><a id="Dichotomous"></a></p>
+<p>Tener en claro la ubicación de los archivos es muy importante. Crear una carpeta para los datos en nuestra maquina es la alternativa clásica, pero si es posible usar el link hacia algún repositorio puede ser más eficiente. Si los archivos están en nuestra máquina, los siguientes comandos de R son de utilidad:</p>
+<pre class="r"><code>#con qué carpeta estamos trabajando?
+getwd()</code></pre>
+<p>Acabamos de ver dónde estamos, si queremos cambiar esto podemos utilizar:</p>
+<pre class="r"><code>setwd()</code></pre>
+<p>La ubicación de nuestra carpeta de trabajo debe estar entre los paréntesis.</p>
+<p>Windows y Mac no describen las rutas de los directorios de la misma manera, por lo que es mejor usar el comando <strong>file.path()</strong>:</p>
+<pre class="r"><code>folder=&quot;data&quot;
+fileName=&quot;idePeru2012.sav&quot;
+fileToRead=file.path(folder,fileName)</code></pre>
+<p>En <em>fileToRead</em> estará la ruta correcta para encontrar nuestros archivos y cargar la data que necesitamos.</p>
+<hr />
+<p><a id="part1"></a></p>
 </div>
-<div id="exploracion-de-variables-dicotomicas" class="section level2">
-<h2><span style="color:blue"> Exploración de variables dicotómicas</span></h2>
-<p>Carguemos una data de LAPOP:</p>
-<pre class="r"><code>library(foreign)
+<div id="leyendo-spss" class="section level2">
+<h2>Leyendo SPSS</h2>
+<p>Carguemos el archivo <em>idePeru2012.sav</em>. Este archivo contiene información del Índice de Densidad Estatal (IDE), elaborado por PNUD, para Perú en el año 2012. La información se encuentra a nivel de provincias.</p>
+<pre class="r"><code>#debemos instalar el paquete &quot;foreign&quot; primero! 
+library(foreign) #carguemos el paquete 
 folder=&quot;data&quot;
-fileName=&quot;PeruLAPOP2014.sav&quot;
+fileName=&quot;idePeru2012.sav&quot;
 fileToRead=file.path(folder,fileName)
-variables=c(&quot;estratopri&quot;,&quot;b18&quot;, &quot;vic1ext&quot;, &quot;q1&quot;, &quot;q2&quot;)
-dataLAPOP=read.spss(fileToRead, to.data.frame=T)[variables] #ignoremos advertencias</code></pre>
-<p>Aqui vemos como se comporta una variable dicotómica:</p>
-<pre class="r"><code>table(dataLAPOP$vic1ext)</code></pre>
-<p>De manera gráfica:</p>
-<pre class="r"><code>toPlot=table(dataLAPOP$vic1ext)
-barplot(toPlot,col=&quot;blue&quot;, #color del gráfico
-        xlab=&quot;Victimas de delincuencia&quot;, 
-        ylab=&quot;Conteo de encuestados&quot;,
-        main=&quot;Distribución encuestados según victimización&quot;)</code></pre>
-<p>Para verlo como porcentajes tenemos:</p>
-<pre class="r"><code>prop.table(table(dataLAPOP$vic1ext)) # como plotearíamos estos resultados?</code></pre>
-<p>Es útil saber si la diferencia es significativa usando la prueba <span class="math inline">\(\chi^2\)</span> :</p>
-<pre class="r"><code>distribucion=table(dataLAPOP$vic1ext)
-chisq.test(distribucion)</code></pre>
-<p>Un valor significativo del p-value (menor a 0.05) sugiere que hay diferencias (se rechaza que haya comportamiento uniforme).</p>
-<p>En esta situación, podemos considerar que la moda es relevante:</p>
-<pre class="r"><code>names(distribucion[which.max(distribucion)]) #asi se obtiene</code></pre>
-<p><a href="#beginning">Inicio</a></p>
+dataSpss=read.spss(fileToRead, use.value.labels = T, to.data.frame = T)
+head(dataSpss) #veamos las primeras filas</code></pre>
+<p><a href="#beginning">Go to page beginning</a></p>
 <hr />
-<p><a id="Nordinal"></a></p>
+<p><a id="part2"></a></p>
 </div>
-<div id="exploracion-de-variables-categoricas-no-ordinales" class="section level2">
-<h2><span style="color:blue"> Exploración de variables categoricas No Ordinales</span></h2>
-<p>Exploremos el estrato de los encuestados por LAPOP:</p>
-<pre class="r"><code>table(dataLAPOP$estratopri)</code></pre>
-<p>Grafiquemos nuestra variable:</p>
-<pre class="r"><code>toPlot=table(dataLAPOP$estratopri)
-barplot(toPlot,col=&quot;magenta&quot;,
-        xlab=&quot;Zona&quot;,
-        ylab= &quot;Conteo de encuestados&quot;,
-        main=&quot;Distribución de encuestados según zona&quot;,
-        las=2) #cambia la orientación de los nombres de las categorías</code></pre>
-<p>Veamos la relevancia de la moda:</p>
-<pre class="r"><code>distribution=table(dataLAPOP$estratopri)
-chisq.test(distribution)</code></pre>
-<p>El resultado sugiere que la moda es significativa. La moda es:</p>
-<pre class="r"><code>names(distribution[which.max(distribution)])</code></pre>
-<p>Otra manera de ver la representatividad o dispersión de la moda es mediante el uso del <a href="https://en.wikipedia.org/wiki/Gini_coefficient">Gini Index</a>:</p>
-<pre class="r"><code>library(DescTools)  # instalar antes!
-Gini(table(dataLAPOP$estratopri),na.rm = TRUE) </code></pre>
-<p>Lima es una moda pronunciada!</p>
-<p><a href="#beginning">Inicio</a></p>
-<p><a id="Ordinal"></a></p>
-</div>
-<div id="exploracion-de-variables-categoricas-ordinales" class="section level2">
-<h2><span style="color:blue"> Exploración de variables categoricas Ordinales</span></h2>
-<p>Exploremos visualmente la confianza en la policia de los encuestados por LAPOP:</p>
-<pre class="r"><code>barplot(table(dataLAPOP$b18),las=1)</code></pre>
-<pre class="r"><code>dataLAPOP$b18=ordered(dataLAPOP$b18)
-head(dataLAPOP$b18)</code></pre>
-<p>Podemos calcular mediana en ordinales:</p>
-<pre class="r"><code>Median(dataLAPOP$b18,na.rm = T)</code></pre>
-<p>Confirmemos:</p>
-<pre class="r"><code>cumsum(prop.table(table(dataLAPOP$b18)))</code></pre>
-<p>La moda es:</p>
-<pre class="r"><code>Mode(dataLAPOP$b18,na.rm = T)</code></pre>
-<p>Los estadísticos no coinciden! muestra asimetría que se notaba en el gráfico de barras.</p>
-<pre class="r"><code>boxplot(dataLAPOP$b18)</code></pre>
-<p>Comencemos a usar <strong>ggplot2</strong>, paquete preferido para los gráficos. Primero uno simple:</p>
-<pre class="r"><code>library(ggplot2)
-data=na.omit(dataLAPOP)
-varToPlot=as.numeric(data$b18)
-thePlot=ggplot(data, aes(x=1,y=varToPlot)) + geom_boxplot() 
-thePlot</code></pre>
-<p>Alteración:</p>
-<pre class="r"><code>thePlot = thePlot + coord_flip()
-thePlot</code></pre>
-<p>Etiquetando eje:</p>
-<pre class="r"><code>theLabels=c(&quot;1=Mucho&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7=mucho&quot;)
-thePlot= thePlot + scale_y_continuous(labels= theLabels,breaks=1:7) 
-thePlot</code></pre>
-<p>Otros elementos:</p>
-<pre class="r"><code>thePlot + labs(title=&quot;Confianza en la Policía Nacional del Perú&quot;, y = 'Respuestas', x=NULL) + scale_x_continuous(labels= NULL, breaks = NULL)</code></pre>
-<p>Finalmente, veamos la dispersion:</p>
-<pre class="r"><code>Gini(table(dataLAPOP$b18),na.rm = T)</code></pre>
-<p><a href="#beginning">Inicio</a></p>
-<hr />
-<p><a id="Counts"></a></p>
-</div>
-<div id="explorando-conteos" class="section level2">
-<h2><span style="color:blue"> Explorando conteos</span></h2>
-<p>La variable <em>edad</em> puede servir para ello:</p>
-<pre class="r"><code>dataLAPOP$q2</code></pre>
-<p>Convertirla en conteo:</p>
-<pre class="r"><code>dataLAPOP$q2 &lt;- as.integer(dataLAPOP$q2)</code></pre>
-<p>Corresponde todavía el uso de barras:</p>
-<pre class="r"><code>ggplot(dataLAPOP, aes(q2)) + geom_bar() </code></pre>
-<p>Veamos sus estadísticos:</p>
-<pre class="r"><code>summary(dataLAPOP$q2)</code></pre>
-<p>Un boxplot:</p>
-<pre class="r"><code>ggplot(dataLAPOP, aes(x = 1, y = q2)) + geom_boxplot() +coord_flip() + labs(title=&quot;Edad Encuestados&quot;, y = &quot;Edad&quot;, x=NULL) + scale_x_continuous(labels= NULL, breaks = NULL)</code></pre>
-<p><a href="#beginning">Inicio</a></p>
-<hr />
-<p><a id="Measurements"></a></p>
-</div>
-<div id="explorando-mediciones" class="section level2">
-<h2><span style="color:blue"> Explorando mediciones</span></h2>
-<p>Las mediciones dan valores continuos (aceptan decimales). Utilizemos la data de IDE:</p>
-<pre class="r"><code>library(foreign)
+<div id="leyendo-csv" class="section level2">
+<h2>Leyendo CSV</h2>
+<p>Podemos abrir la misma data (IDE 2012) en formato CSV:</p>
+<pre class="r"><code>library(foreign) #utilizamos foreign, no es necesario volver a instalar el paquete
 folder=&quot;data&quot;
 fileName=&quot;idePeru2012.csv&quot;
 fileToRead=file.path(folder,fileName)
-dataIDE=read.csv(fileToRead)</code></pre>
-<p>Pedimos un histograma:</p>
-<pre class="r"><code>ggplot(dataIDE,aes(x=IDE)) + geom_histogram()</code></pre>
-<p>…Y nuestro boxplot:</p>
-<pre class="r"><code>ggplot(dataIDE,aes(y=IDE,x=1)) + geom_boxplot() + coord_flip() + labs(title=&quot;Indice de Densidad Estatal 2012&quot;, y=&quot;IDE&quot;, x=NULL) +  scale_x_continuous(labels= NULL, breaks = NULL) </code></pre>
-<p><a href="#beginning">Inicio</a></p>
+dataCsv=read.csv(fileToRead)
+head(dataCsv) #veamos las primeras filas</code></pre>
+<p><a href="#beginning">Go to page beginning</a></p>
 <hr />
-<p><a id="catcat"></a></p>
+<p><a id="part3"></a></p>
 </div>
-<div id="categorico---categorico" class="section level2">
-<h2><span style="color:blue">Categórico - Categórico </span></h2>
-<p>Utilicemos la data de LAPOP.</p>
-<p>Recordemos como se distribuye <em>victimización</em>:</p>
-<pre class="r"><code>table(dataLAPOP$vic1ext)</code></pre>
-<p>… y <em>sexo</em>:</p>
-<pre class="r"><code>table(dataLAPOP$q1)</code></pre>
-<p>La manera simple de analizar relaciones <em>cat-cat</em> (asociación) es la <strong>tabla de contingencia</strong> (crosstab):</p>
-<pre class="r"><code>table(dataLAPOP$q1,dataLAPOP$vic1ext)</code></pre>
-<p>Fue simple… pero R tiene otros paquetes para analizar asociación:</p>
-<pre class="r"><code>library(gmodels)
-CrossTable(dataLAPOP$q1,dataLAPOP$vic1ext,prop.t=F, prop.r=F, prop.c=F,prop.chisq=F)</code></pre>
-<p>Los procentajes pueden ser también por fila:</p>
-<pre class="r"><code>CrossTable(dataLAPOP$q1,dataLAPOP$vic1ext,prop.t=F, prop.r=T, prop.c=F,prop.chisq=F)</code></pre>
-<p>… o por columna:</p>
-<pre class="r"><code>CrossTable(dataLAPOP$q1,dataLAPOP$vic1ext,prop.t=F, prop.r=F, prop.c=T,prop.chisq=F)</code></pre>
-<p>Aquí también podemos usar el <span class="math inline">\({\chi}^2\)</span> para testear si hay asociación entre variables:</p>
-<pre class="r"><code>CrossTable(dataLAPOP$q1,dataLAPOP$vic1ext,prop.t=F, prop.r=F, prop.c=F,prop.chisq=F,chisq=T)</code></pre>
-<p>El p-value indica que no hay diferencia en la victimación según sexo.</p>
-<p>Ello se refleja en un gráfico:</p>
-<pre class="r"><code>legendPlot=levels(as.factor(unique(dataLAPOP$q1)))
-bartable = table(dataLAPOP$q1,dataLAPOP$vic1ext)  ## tabla cruzada
-barplot(bartable, beside = TRUE,legend=legendPlot)  ## gráfico</code></pre>
-<p>Una gráfical alternativa:</p>
-<pre class="r"><code>library(ggplot2)                           
-
-#volver nuestra tabla en una dataframe: 
-subLAPOP=as.data.frame(table(dataLAPOP$q1,dataLAPOP$vic1ext))
-names(subLAPOP)=c(&quot;sexo&quot;,&quot;victimizacion&quot;, &quot;f&quot;)
-
-#Grafiquemos la data:
-g &lt;- ggplot(subLAPOP, aes(sexo, victimizacion)) + geom_point(aes(size = f), colour = &quot;green&quot;) + theme_bw() + xlab(&quot;&quot;) + ylab(&quot;&quot;) +theme(legend.position=&quot;none&quot;)
-g + scale_size_continuous(range=c(5,30)) + geom_text(aes(label = f))</code></pre>
-<p><a href="#beginning">Inicio</a></p>
+<div id="leyendo-xlsx" class="section level2">
+<h2>Leyendo XLSX</h2>
+<p>Otro formato de mucho uso es el de las hojas de cálculo en Excel. A continuación cargaremos la data del Índice de Desarrollo Humano (IDH), elaborado por PNUD, para Perú en el año 2012. La información se encuentra a nivel de provincias.</p>
+<pre class="r"><code>#instalemos el paquete &quot;readxl&quot; primero
+library(readxl) #carguemos el paquete 
+folder=&quot;data&quot;
+fileName=&quot;idhPeru.xlsx&quot;
+fileToRead=file.path(folder,fileName)
+dataExcel=read_excel(fileToRead)
+head(dataExcel) #veamos las primeras filas</code></pre>
+<p><a href="#beginning">Go to page beginning</a></p>
 <hr />
-<p><a id="catnum"></a></p>
+<p><a id="part4"></a></p>
 </div>
-<div id="categorico---numerico" class="section level2">
-<h2><span style="color:blue">Categórico - Numérico</span></h2>
-<p>Lo usual es ver como se comporta una variable numérica ante diversos factores. Veamos si el IDH se diferencia entre provincias capitales y provincias que no son capitales.</p>
-<pre class="r"><code># solo las contribuciones de negocios:
-p &lt;- ggplot(dataIDE, aes(capital, IDE))
-p + geom_boxplot()</code></pre>
-<p>El boxplot da mucha información, para lo anterior podría calcular los intervalos de confianza para la media:</p>
-<pre class="r"><code># Creo una funciónpara el error standard de la media (seMean):
-seMean = function(x) sd(x)/sqrt(length(x))
+<div id="recolectando-datos-espaciales" class="section level2">
+<h2>Recolectando Datos espaciales</h2>
+<p>Los datos especiales presentan una complejidad diferente. Este tipo de datos, además de la información de la unidad de estudio, guardan información que permite visualizar lineas, puntos y polígonos.</p>
+<p>El formato RDS de R puede almacenar este tipo de información. Por ejemplo, si visitamos la pagina web del <a href="http://www.gadm.org/country">GADM database of Global Administrative Areas</a> podemos descargar mapas por país a diversos niveles subnacionales. Si buscamos la data para Perú podemos:</p>
+<pre class="r"><code>library(sp)  #instalemos el paquete primero!
+PeruRegs &lt;- readRDS(gzcon(url(&quot;http://biogeo.ucdavis.edu/data/gadm2.8/rds/PER_adm1.rds&quot;))) # la información está a nivel de regiones! </code></pre>
+<p>PeruRegs ya tiene la información. Si solo queremos ver los datos:</p>
+<pre class="r"><code>PeruRegs@data #vemos la data</code></pre>
+<p>Aqui gráfico:</p>
+<pre class="r"><code>plot(PeruRegs) #veamos el mapa </code></pre>
+<p>Un formato más común son los mapas en SHAPEFILE. Hay un directorio dentro del folder <em>data</em> donde estan varios mapas de limites administrativos del Perú:</p>
+<pre class="r"><code>folder=&quot;data&quot;
+fileName=&quot;provinciasPeru.shp&quot;  #la información en este caso está a nivel de provincias
+fileToRead=file.path(folder,fileName)
 
-# Media por grupo
-means=aggregate(list(mean=dataIDE$IDE),
-          list(capital=dataIDE$capital),mean)
-
-# error standard por grupo: (usando mi función)
-sems=aggregate(list(seMean=dataIDE$IDE),
-          list(capital=dataIDE$capital),seMean)</code></pre>
-<p>Aqui vemos que tenemos hasta ahora:</p>
-<pre class="r"><code>means</code></pre>
-<p>…y</p>
-<pre class="r"><code>sems</code></pre>
-<p>Juntemos lo anterior en un data frame:</p>
-<pre class="r"><code>#usando MERGE:
-data=merge(means,sems) # capital es la 'key' para combinar
-#tenemos:
-data</code></pre>
-<p>Creemos mas columnas donde aparezcan los valores de los intervalos de confianza:</p>
-<pre class="r"><code># adding confidence interval limits:
-data$lower=data$mean-2*data$seMean
-data$upper=data$mean+2*data$seMean
-
-## version final:
-data</code></pre>
-<p>Con esto puedo graficarlos:</p>
-<pre class="r"><code># this creates a plot of  the points (means):
-meanPlot = ggplot(data, aes(y=mean, x=capital)) + geom_point()
-
-# this adds the error bars:
-errorPlot = meanPlot + geom_errorbar(aes(ymin = lower, ymax = upper))
-
-# final result
-errorPlot</code></pre>
-<p>La gráfica sugiere que el hay diferencia en el IDE entre las provincias que son capital y las que no. Si aplicamos la prueba t-student, el p-value debería salir significativo:</p>
-<pre class="r"><code>t.test(dataIDE$IDE~dataIDE$capital,var.equal = T)</code></pre>
-<p>…y así fue. Podemos concluir que ambos grupos se comportan de manera diferente?</p>
-<p>Veamos esta gráfica de densidades:</p>
-<pre class="r"><code>ggplot(dataIDE, aes(IDE, colour = capital)) +
-  geom_density() </code></pre>
-<p>Veamos algo más complejo, diferencia en el IDE según clasificación de tamaño de la provincia.</p>
-<p>Tratemos tamaño como una variable categórica:</p>
-<pre class="r"><code>dataIDE$tamano &lt;- as.factor(dataIDE$tamano)</code></pre>
-<pre class="r"><code>with(dataIDE, tapply(IDE, tamano, mean) )</code></pre>
-<p>Analicemos en general las contribuciones segun tamaño de la provincia</p>
-<pre class="r"><code>m &lt;- ggplot(dataIDE, aes(x = IDE))
-m + geom_histogram(bins=20) + facet_wrap(~tamano,scales = &quot;free&quot;)</code></pre>
-<p>Serán las constribuciones diferentes? En este caso, usaremos una prueba F:</p>
-<pre class="r"><code>model = aov(IDE ~ tamano, data = dataIDE)
-summary(model)</code></pre>
-<p>La prueba detecta que <em>code</em> produce diferencias. No nos dice cuáles son, por lo que debemos pedir una comparación <em>post hoc</em> (Tukey):</p>
-<pre class="r"><code>TukeyHSD(model)</code></pre>
-<p>El resultado es largo, pero podemos hacerlo sencillo:</p>
-<pre class="r"><code>result=as.data.frame(TukeyHSD(model)$tamano)
-result[4]&lt;0.05</code></pre>
-<p><a href="#beginning">Inicio</a> ____</p>
-<p><a id="numnum"></a></p>
-</div>
-<div id="numerico---numerico" class="section level2">
-<h2><span style="color:blue">Numérico - Numérico</span></h2>
-<p>Analicemos la data de IDE. Podemos hacer analisis <em>num-num</em>, más conocido como <strong>correlacional</strong>.Analicemos los indicadores que componen el IDE:</p>
-<pre class="r"><code>res &lt;- cor(dataIDE[,c(4:8)])
-round(res, 2)</code></pre>
-<p>Veamos una gráfica:</p>
-<pre class="r"><code>library(car)
-scatterplotMatrix(dataIDE[,c(4:8)], 
-   main=&quot;Simple Scatterplot Matrix&quot;)</code></pre>
-<p>De hecho, tenemos una versión no-paramétrica para Pearson:</p>
-<pre class="r"><code>cor(dataIDE[,c(4:8)],method='spearman')</code></pre>
-<p><a href="#beginning">Inicio</a></p>
+library(maptools) #instalemos el paquete primero!
+library(rgeos) #instalemos el paquete primero!
+PeruRegs_shp=readShapePoly(fileToRead)</code></pre>
+<p><em>PeruRegs_shp</em> tiene el mapa. Salió un <em>warning</em> pero lo podemos obviar. El gráfico funciona (demora un poco):</p>
+<pre class="r"><code>plot(PeruRegs_shp) #veamos el mapa </code></pre>
+<p><a href="#beginning">Go to page beginning</a></p>
 <hr />
-<p><br /></p>
-<div id="volver-al-silabo" class="section level4">
-<h4><a href="https://politicaygobiernopucp.github.io/EstadisticaPoliticaGobiernoII/">VOLVER AL SILABO</a></h4>
-</div>
 </div>
 
 
