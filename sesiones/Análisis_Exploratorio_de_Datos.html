@@ -156,27 +156,20 @@ $(document).ready(function () {
 <div id="carga-de-datos" class="section level2">
 <h2><span style="color:blue"> Carga de datos</span></h2>
 <p>Carguemos la data de <em>IDEPerú2012.xlsx</em>. Esta data contiene información del Índice de Densidad Estatal (IDE), elaborado por PNUD, para Perú en el año 2012. La información se encuentra a nivel de provincias.</p>
-<p>Debemos tener en cuenta cuál es nuestra carpeta de trabajo (directorio). Windows y Mac no describen las rutas de los directorios de la misma manera, por lo que es mejor usar el comando <strong>file.path()</strong>:</p>
-<pre class="r"><code>folder=&quot;data&quot;
-fileName=&quot;idePeru2012.xlsx&quot;
-fileToRead=file.path(folder,fileName)</code></pre>
-<p>En <em>fileToRead</em> estará la ruta correcta para encontrar nuestro archivo y cargar la data que necesitamos.</p>
 <p>Para cargar data en formato XLSX usamos el paquete readxl:</p>
-<pre class="r"><code>library(readxl) #instalemos el paquete antes de cargarlo! 
-
-folder=&quot;data&quot;
+<pre class="r"><code>folder=&quot;data&quot;
 fileName=&quot;idePeru2012.xlsx&quot;
 fileToRead=file.path(folder,fileName)
 
+library(readxl) #instalemos el paquete antes de cargarlo! 
 ideExcel=read_excel(fileToRead) #carguemos nuestra data! 
 head(ideExcel) #veamos las primeras filas</code></pre>
 <p>Podemos cargar la misma data en formato SAV (para archivos de SPSS). Para ello, usamos el paquete foreign:</p>
-<pre class="r"><code>library(foreign) #instalemos el paquete antes de cargarlo! 
-
-folder=&quot;data&quot;
+<pre class="r"><code>folder=&quot;data&quot;
 fileName=&quot;idePeru2012.sav&quot;
 fileToRead=file.path(folder,fileName)
 
+library(foreign) #instalemos el paquete antes de cargarlo! 
 ideSpss=read.spss(fileToRead, use.value.labels = T, to.data.frame = T)
 head(ideSpss) #veamos las primeras filas</code></pre>
 <p>Veamos los nombres de las variables en nuestra base de datos:</p>

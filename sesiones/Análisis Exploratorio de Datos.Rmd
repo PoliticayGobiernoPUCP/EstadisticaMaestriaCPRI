@@ -35,24 +35,13 @@ ____
 
 Carguemos la data de _IDEPerú2012.xlsx_. Esta data contiene información del Índice de Densidad Estatal (IDE), elaborado por PNUD, para Perú en el año 2012. La información se encuentra a nivel de provincias. 
 
-Debemos tener en cuenta cuál es nuestra carpeta de trabajo (directorio). Windows y Mac no describen las rutas de los directorios de la misma manera, por lo que es mejor usar el comando **file.path()**:
-
-```{r, eval=FALSE}
-folder="data"
-fileName="idePeru2012.xlsx"
-fileToRead=file.path(folder,fileName)
-```
-
-En _fileToRead_ estará la ruta correcta para encontrar nuestro archivo y cargar la data que necesitamos. 
-
 Para cargar data en formato XLSX usamos el paquete readxl:
 ```{r, eval=FALSE}
-library(readxl) #instalemos el paquete antes de cargarlo! 
-
 folder="data"
 fileName="idePeru2012.xlsx"
 fileToRead=file.path(folder,fileName)
 
+library(readxl) #instalemos el paquete antes de cargarlo! 
 ideExcel=read_excel(fileToRead) #carguemos nuestra data! 
 head(ideExcel) #veamos las primeras filas
 ```
@@ -60,12 +49,11 @@ head(ideExcel) #veamos las primeras filas
 Podemos cargar la misma data en formato SAV (para archivos de SPSS). Para ello, usamos el paquete foreign:
 
 ```{r, eval=FALSE}
-library(foreign) #instalemos el paquete antes de cargarlo! 
-
 folder="data"
 fileName="idePeru2012.sav"
 fileToRead=file.path(folder,fileName)
 
+library(foreign) #instalemos el paquete antes de cargarlo! 
 ideSpss=read.spss(fileToRead, use.value.labels = T, to.data.frame = T)
 head(ideSpss) #veamos las primeras filas
 ```
